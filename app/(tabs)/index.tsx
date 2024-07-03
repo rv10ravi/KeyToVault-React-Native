@@ -7,6 +7,19 @@ import {
   FlatList,
   TouchableOpacity,
 } from "react-native";
+import { useNavigation } from "@react-navigation/native";
+import { StackNavigationProp } from "@react-navigation/stack";
+
+type RootStackParamList = {
+  Home: undefined;
+  Folders: undefined;
+  Password: undefined;
+  "Secure Note": undefined;
+  Cards: undefined;
+  Identities: undefined;
+};
+
+type HomeScreenNavigationProp = StackNavigationProp<RootStackParamList, "Home">;
 
 const data = [
   {
@@ -37,13 +50,20 @@ const data = [
 ];
 
 export default function HomeScreen() {
+  const navigation = useNavigation<HomeScreenNavigationProp>();
+
   return (
     <View style={styles.container}>
       <Text style={styles.headerText}>Browse</Text>
       <FlatList
         data={data}
         renderItem={({ item }) => (
-          <TouchableOpacity style={styles.itemContainer}>
+          <TouchableOpacity
+            style={styles.itemContainer}
+            onPress={() =>
+              navigation.navigate(item.key as keyof RootStackParamList)
+            }
+          >
             <View
               style={[styles.iconContainer, { backgroundColor: item.color }]}
             >
@@ -63,6 +83,7 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: "#F4F4F5",
     padding: 20,
+    paddingTop:40,
   },
   headerText: {
     fontSize: 24,
