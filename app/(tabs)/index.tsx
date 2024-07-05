@@ -1,17 +1,9 @@
 import React from "react";
-import {
-  Image,
-  StyleSheet,
-  View,
-  Text,
-  FlatList,
-  TouchableOpacity,
-} from "react-native";
+import { Image, StyleSheet, View, Text, FlatList, TouchableOpacity } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import { StackNavigationProp } from "@react-navigation/stack";
 
 type RootStackParamList = {
-  Home: undefined;
   Folders: undefined;
   Password: undefined;
   "Secure Note": undefined;
@@ -19,7 +11,7 @@ type RootStackParamList = {
   Identities: undefined;
 };
 
-type HomeScreenNavigationProp = StackNavigationProp<RootStackParamList, "Home">;
+type HomeScreenNavigationProp = StackNavigationProp<RootStackParamList, "Folders">;
 
 const data = [
   {
@@ -83,7 +75,7 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: "#F4F4F5",
     padding: 20,
-    paddingTop:40,
+    paddingTop: 40,
   },
   headerText: {
     fontSize: 24,

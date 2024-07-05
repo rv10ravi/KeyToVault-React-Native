@@ -1,44 +1,131 @@
-import React from "react";
-import { View, Text, StyleSheet, FlatList } from "react-native";
+import React, { useState } from "react";
+import {
+  View,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  ScrollView,
+  StyleSheet,
+} from "react-native";
 
-const secureNoteData = [
-  { key: "Secure Note 1" },
-  { key: "Secure Note 2" },
-  { key: "Secure Note 3" },
-  // Add more secure notes as needed
-];
+const App = () => {
+  const [items, setItems] = useState([]);
+  const [title, setTitle] = useState("");
+  const [description, setDescription] = useState("");
 
-export default function SecureNoteScreen() {
+  const handleAddItem = () => {
+    if (title.trim() !== "" && description.trim() !== "") {
+      const newItem = {
+        id: Date.now(),
+        title: title,
+        description: description,
+      };
+      setItems([...items, newItem]);
+      setTitle("");
+      setDescription("");
+    } else {
+      alert("Please enter both title and description.");
+    }
+  };
+
   return (
     <View style={styles.container}>
-      <Text style={styles.headerText}>Secure Note</Text>
-      <FlatList
-        data={secureNoteData}
-        renderItem={({ item }) => (
-          <Text style={styles.itemText}>{item.key}</Text>
-        )}
-        keyExtractor={(item) => item.key}
-      />
+      <ScrollView contentContainerStyle={styles.scrollView}>
+        {items.map((item) => (
+          <View key={item.id} style={styles.card}>
+            <Text style={styles.title}>{item.title}</Text>
+            <Text style={styles.description}>{item.description}</Text>
+          </View>
+        ))}
+      </ScrollView>
+
+      <View style={styles.inputContainer}>
+        <TextInput
+          style={styles.input}
+          placeholder="Title"
+          value={title}
+          onChangeText={(text) => setTitle(text)}
+        />
+        <TextInput
+          style={[styles.input, styles.descriptionInput]}
+          placeholder="Description"
+          multiline
+          value={description}
+          onChangeText={(text) => setDescription(text)}
+        />
+        <TouchableOpacity style={styles.addButton} onPress={handleAddItem}>
+          <Text style={styles.addButtonText}>Add</Text>
+        </TouchableOpacity>
+      </View>
     </View>
   );
-}
+};
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#F4F4F5",
-    padding: 20,
+    backgroundColor: "#f0f8ff",
+    paddingVertical: 20,
+    paddingHorizontal: 16,
+    marginTop:30,
   },
-  headerText: {
-    fontSize: 24,
-    fontWeight: "bold",
-    marginBottom: 20,
+  scrollView: {
+    flexGrow: 1,
   },
-  itemText: {
+  card: {
+    backgroundColor: "#ffffff",
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 16,
+    shadowColor: "#000",
+    shadowOpacity: 0.2,
+    shadowRadius: 10,
+    elevation: 5,
+  },
+  title: {
     fontSize: 18,
-    color: "#1F2937",
-    paddingVertical: 10,
-    borderBottomWidth: 1,
-    borderBottomColor: "#E5E7EB",
+    fontWeight: "bold",
+    color: "#4682b4",
+    marginBottom: 8,
+  },
+  description: {
+    fontSize: 16,
+    color: "#696969",
+  },
+  inputContainer: {
+    backgroundColor: "#ffffff",
+    borderRadius: 12,
+    padding: 16,
+    marginTop: 16,
+    shadowColor: "#000",
+    shadowOpacity: 0.2,
+    shadowRadius: 10,
+    elevation: 5,
+  },
+  input: {
+    borderWidth: 1,
+    borderColor: "#dcdcdc",
+    borderRadius: 8,
+    padding: 12,
+    marginBottom: 12,
+    fontSize: 16,
+    backgroundColor: "#f9f9f9",
+  },
+  descriptionInput: {
+    height: 100,
+    textAlignVertical: "top",
+  },
+  addButton: {
+    backgroundColor: "#4682b4",
+    borderRadius: 8,
+    paddingVertical: 12,
+    alignItems: "center",
+  },
+  addButtonText: {
+    fontSize: 18,
+    fontWeight: "bold",
+    color: "#ffffff",
   },
 });
+
+export default App;
