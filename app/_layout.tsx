@@ -7,15 +7,14 @@ import {
 import { createStackNavigator } from "@react-navigation/stack";
 import { useFonts } from "expo-font";
 import * as SplashScreen from "expo-splash-screen";
-
-import LoginScreen from "./screens/LoginScreen"; // Adjust path as per your project structure
-import SignupScreen from "./screens/SignupScreen"; // Adjust path as per your project structure
-import TabsScreen from "./(tabs)"; // Adjust path as per your project structure
+import LoginScreen from "./screens/LoginScreen";
+import SignupScreen from "./screens/SignupScreen";
+import TabsScreen from "./(tabs)";
 import PasswordScreen from "./screens/PasswordScreen";
 import CardsScreen from "./screens/CardsScreen";
 import FoldersScreen from "./screens/FoldersScreen";
 import SecureNoteScreen from "./screens/SecureNoteScreen";
-import IdentitiesScreen from "./screens/IdentitiesScreen"
+import IdentitiesScreen from "./screens/IdentitiesScreen";
 import { useColorScheme } from "@/hooks/useColorScheme";
 
 // Prevent the splash screen from auto-hiding before asset loading is complete.

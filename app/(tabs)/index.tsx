@@ -1,17 +1,25 @@
 import React from "react";
-import { Image, StyleSheet, View, Text, FlatList, TouchableOpacity } from "react-native";
+import {
+  Image,
+  StyleSheet,
+  View,
+  Text,
+  FlatList,
+  TouchableOpacity,
+} from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import { StackNavigationProp } from "@react-navigation/stack";
 
 type RootStackParamList = {
+  Home: undefined;
   Folders: undefined;
-  Password: undefined;
+  Passwords: undefined;
   "Secure Note": undefined;
   Cards: undefined;
   Identities: undefined;
 };
 
-type HomeScreenNavigationProp = StackNavigationProp<RootStackParamList, "Folders">;
+type HomeScreenNavigationProp = StackNavigationProp<RootStackParamList, "Home">;
 
 const data = [
   {
@@ -20,12 +28,12 @@ const data = [
     color: "#AB87FF",
   },
   {
-    key: "Password",
+    key: "Passwords",
     icon: require("../../assets/icons/key-solid.png"),
     color: "#60D2D3",
   },
   {
-    key: "Secure Note",
+    key: "Notes",
     icon: require("../../assets/icons/note-sticky-solid.png"),
     color: "#F3A13E",
   },
