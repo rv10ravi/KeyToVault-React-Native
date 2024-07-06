@@ -8,14 +8,13 @@ import {
   Alert,
 } from "react-native";
 import { getAuth, signInWithEmailAndPassword } from "firebase/auth";
-import { app } from "../../firebaseConfig"; // Adjust the import according to your firebase configuration file
+import { auth } from "../../firebaseConfig"; // Updated import
 
 const LoginScreen: React.FC<{ navigation: any }> = ({ navigation }) => {
   const [email, setEmail] = useState<string>("");
   const [password, setPassword] = useState<string>("");
 
   const handleLogin = async () => {
-    const auth = getAuth(app);
     try {
       await signInWithEmailAndPassword(auth, email, password);
       Alert.alert("Success", "Logged in successfully");

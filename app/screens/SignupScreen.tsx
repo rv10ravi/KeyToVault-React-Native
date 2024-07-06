@@ -8,7 +8,7 @@ import {
   Alert,
 } from "react-native";
 import { getAuth, createUserWithEmailAndPassword } from "firebase/auth";
-import app from "../../firebaseConfig";
+import { auth } from "../../firebaseConfig"; // Updated import
 
 const SignupScreen: React.FC<{ navigation: any }> = ({ navigation }) => {
   const [email, setEmail] = useState<string>("");
@@ -21,7 +21,6 @@ const SignupScreen: React.FC<{ navigation: any }> = ({ navigation }) => {
       return;
     }
 
-    const auth = getAuth(app);
     try {
       await createUserWithEmailAndPassword(auth, email, password);
       Alert.alert("Success", "Account created successfully");
