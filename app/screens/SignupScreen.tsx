@@ -7,19 +7,28 @@ import {
   TouchableOpacity,
   Alert,
 } from "react-native";
+import { getAuth, createUserWithEmailAndPassword } from "firebase/auth";
+import app from "../../firebaseConfig";
 
 const SignupScreen: React.FC<{ navigation: any }> = ({ navigation }) => {
   const [email, setEmail] = useState<string>("");
   const [password, setPassword] = useState<string>("");
   const [confirmPassword, setConfirmPassword] = useState<string>("");
 
-  const handleSignup = () => {
-    // Implement signup logic here
+  const handleSignup = async () => {
     if (password !== confirmPassword) {
       Alert.alert("Error", "Passwords do not match");
       return;
     }
-    Alert.alert("Signup", `Email: ${email}, Password: ${password}`);
+
+    const auth = getAuth(app);
+    try {
+      await createUserWithEmailAndPassword(auth, email, password);
+      Alert.alert("Success", "Account created successfully");
+      navigation.navigate("Login");
+    } catch (error: any) {
+      Alert.alert("Signup Error", error.message);
+    }
   };
 
   return (

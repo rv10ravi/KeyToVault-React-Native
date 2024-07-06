@@ -7,15 +7,22 @@ import {
   TouchableOpacity,
   Alert,
 } from "react-native";
+import { getAuth, signInWithEmailAndPassword } from "firebase/auth";
+import { app } from "../../firebaseConfig"; // Adjust the import according to your firebase configuration file
 
 const LoginScreen: React.FC<{ navigation: any }> = ({ navigation }) => {
   const [email, setEmail] = useState<string>("");
   const [password, setPassword] = useState<string>("");
 
-  const handleLogin = () => {
-    // Implement login logic here
-    Alert.alert("Login", `Email: ${email}, Password: ${password}`);
-    navigation.navigate("Tabs");
+  const handleLogin = async () => {
+    const auth = getAuth(app);
+    try {
+      await signInWithEmailAndPassword(auth, email, password);
+      Alert.alert("Success", "Logged in successfully");
+      navigation.navigate("Tabs");
+    } catch (error: any) {
+      Alert.alert("Login Error", error.message);
+    }
   };
 
   return (
