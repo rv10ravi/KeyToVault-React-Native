@@ -1,6 +1,4 @@
-import React, { useState } from "react";
-import { TouchableOpacity } from "react-native";
-
+import React, { useState, useEffect } from "react";
 import {
   View,
   Text,
@@ -9,38 +7,47 @@ import {
   TextInput,
   Button,
   StyleSheet,
+  TouchableOpacity,
 } from "react-native";
+import * as FileSystem from "expo-file-system";
+
+const fileUri = FileSystem.documentDirectory + "passwords.json";
 
 const App = () => {
-  const [data, setData] = useState([
-    {
-      id: 1,
-      socialMediaName: "Facebook",
-      email: "example@gmail.com",
-      password: "password1",
-    },
-    {
-      id: 2,
-      socialMediaName: "Twitter",
-      email: "example2@gmail.com",
-      password: "password2",
-    },
-    {
-      id: 3,
-      socialMediaName: "Instagram",
-      email: "example3@gmail.com",
-      password: "password3",
-    },
-  ]);
-
+  const [data, setData] = useState([]);
   const [showModal, setShowModal] = useState(false);
   const [socialMediaName, setSocialMediaName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
+  useEffect(() => {
+    loadData();
+  }, []);
+
+  const loadData = async () => {
+    try {
+      const fileInfo = await FileSystem.getInfoAsync(fileUri);
+      if (fileInfo.exists) {
+        const fileData = await FileSystem.readAsStringAsync(fileUri);
+        setData(JSON.parse(fileData));
+      }
+    } catch (error) {
+      console.log("Error loading data:", error);
+    }
+  };
+
+  const saveData = async (data) => {
+    try {
+      await FileSystem.writeAsStringAsync(fileUri, JSON.stringify(data));
+    } catch (error) {
+      console.log("Error saving data:", error);
+    }
+  };
+
   const handleDelete = (id) => {
     const updatedData = data.filter((item) => item.id !== id);
     setData(updatedData);
+    saveData(updatedData);
   };
 
   const handleView = (item) => {
@@ -58,12 +65,14 @@ const App = () => {
 
   const handleSave = () => {
     const newItem = {
-      id: data.length + 1,
+      id: Date.now(),
       socialMediaName,
       email,
       password,
     };
-    setData([...data, newItem]);
+    const updatedData = [...data, newItem];
+    setData(updatedData);
+    saveData(updatedData);
     setShowModal(false);
     setSocialMediaName("");
     setEmail("");

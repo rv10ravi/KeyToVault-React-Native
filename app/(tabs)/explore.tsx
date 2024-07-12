@@ -1,10 +1,10 @@
-import React from 'react';
-import Ionicons from '@expo/vector-icons/Ionicons';
-import { StyleSheet, View, Text, ScrollView } from 'react-native';
-import { Collapsible } from '@/components/Collapsible';
-import ParallaxScrollView from '@/components/ParallaxScrollView';
-import { ThemedText } from '@/components/ThemedText';
-import { ThemedView } from '@/components/ThemedView';
+import React from "react";
+import Ionicons from "@expo/vector-icons/Ionicons";
+import { StyleSheet, View, Text, ScrollView } from "react-native";
+import { Collapsible } from "@/components/Collapsible";
+import ParallaxScrollView from "@/components/ParallaxScrollView";
+import { ThemedText } from "@/components/ThemedText";
+import { ThemedView } from "@/components/ThemedView";
 
 const profileData = [
   { title: "Name", value: "John Doe" },
@@ -13,16 +13,27 @@ const profileData = [
 ];
 
 const settingsData = [
-  { title: "Account", items: ["Change Email", "Change Password", "Manage Subscriptions"] },
-  { title: "Privacy", items: ["Blocked Users", "Activity Status", "Location Services"] },
-  { title: "Notifications", items: ["Push Notifications", "Email Notifications"] },
+  {
+    title: "Account",
+    items: ["Change Email", "Change Password", "Manage Subscriptions"],
+  },
+  {
+    title: "Privacy",
+    items: ["Blocked Users", "Activity Status", "Location Services"],
+  },
+  {
+    title: "Notifications",
+    items: ["Push Notifications", "Email Notifications"],
+  },
 ];
 
 export default function ProfileAndSettingsScreen() {
   return (
     <ParallaxScrollView
-      headerBackgroundColor={{ light: '#D0D0D0', dark: '#353636' }}
-      headerImage={<Ionicons size={310} name="settings-sharp" style={styles.headerImage} />}
+      headerBackgroundColor={{ light: "#D0D0D0", dark: "#353636" }}
+      headerImage={
+        <Ionicons size={310} name="settings-sharp" style={styles.headerImage} />
+      }
     >
       <ThemedView style={styles.titleContainer}>
         <ThemedText type="title">Profile and Settings</ThemedText>
@@ -39,7 +50,9 @@ export default function ProfileAndSettingsScreen() {
         {settingsData.map((section, index) => (
           <Collapsible key={index} title={section.title}>
             {section.items.map((item, idx) => (
-              <ThemedText key={idx} style={styles.settingItem}>{item}</ThemedText>
+              <ThemedText key={idx} style={styles.settingItem}>
+                {item}
+              </ThemedText>
             ))}
           </Collapsible>
         ))}
@@ -50,13 +63,13 @@ export default function ProfileAndSettingsScreen() {
 
 const styles = StyleSheet.create({
   headerImage: {
-    color: '#808080',
+    color: "#808080",
     bottom: -90,
     left: -35,
-    position: 'absolute',
+    position: "absolute",
   },
   titleContainer: {
-    flexDirection: 'row',
+    flexDirection: "row",
     gap: 8,
   },
   contentContainer: {
@@ -67,15 +80,15 @@ const styles = StyleSheet.create({
   },
   profileTitle: {
     fontSize: 18,
-    fontWeight: 'bold',
+    fontWeight: "bold",
   },
   profileValue: {
     fontSize: 16,
-    color: '#666',
+    color: "#666",
   },
   settingItem: {
     paddingVertical: 10,
     borderBottomWidth: 1,
-    borderBottomColor: '#E5E7EB',
+    borderBottomColor: "#E5E7EB",
   },
 });

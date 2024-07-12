@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   View,
   Text,
@@ -6,26 +6,64 @@ import {
   TouchableOpacity,
   ScrollView,
   StyleSheet,
+  Alert,
 } from "react-native";
+import * as FileSystem from 'expo-file-system';
+
+const filePath = FileSystem.documentDirectory + "secureNotes.json";
 
 const App = () => {
   const [items, setItems] = useState([]);
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
 
-  const handleAddItem = () => {
+  useEffect(() => {
+    loadItems();
+  }, []);
+
+  const loadItems = async () => {
+    try {
+      const fileExists = await FileSystem.getInfoAsync(filePath);
+      if (fileExists.exists) {
+        const fileContents = await FileSystem.readAsStringAsync(filePath);
+        setItems(JSON.parse(fileContents));
+      }
+    } catch (error) {
+      Alert.alert("Error", "Failed to load items");
+      console.error(error);
+    }
+  };
+
+  const saveItems = async (items) => {
+    try {
+      await FileSystem.writeAsStringAsync(filePath, JSON.stringify(items));
+    } catch (error) {
+      Alert.alert("Error", "Failed to save items");
+      console.error(error);
+    }
+  };
+
+  const handleAddItem = async () => {
     if (title.trim() !== "" && description.trim() !== "") {
       const newItem = {
         id: Date.now(),
         title: title,
         description: description,
       };
-      setItems([...items, newItem]);
+      const updatedItems = [...items, newItem];
+      setItems(updatedItems);
       setTitle("");
       setDescription("");
+      await saveItems(updatedItems);
     } else {
-      alert("Please enter both title and description.");
+      Alert.alert("Error", "Please enter both title and description.");
     }
+  };
+
+  const handleDeleteItem = async (id) => {
+    const updatedItems = items.filter((item) => item.id !== id);
+    setItems(updatedItems);
+    await saveItems(updatedItems);
   };
 
   return (
@@ -35,6 +73,12 @@ const App = () => {
           <View key={item.id} style={styles.card}>
             <Text style={styles.title}>{item.title}</Text>
             <Text style={styles.description}>{item.description}</Text>
+            <TouchableOpacity
+              style={styles.deleteButton}
+              onPress={() => handleDeleteItem(item.id)}
+            >
+              <Text style={styles.deleteButtonText}>Delete</Text>
+            </TouchableOpacity>
           </View>
         ))}
       </ScrollView>
@@ -67,7 +111,7 @@ const styles = StyleSheet.create({
     backgroundColor: "#f0f8ff",
     paddingVertical: 20,
     paddingHorizontal: 16,
-    marginTop:30,
+    marginTop: 30,
   },
   scrollView: {
     flexGrow: 1,
@@ -91,6 +135,17 @@ const styles = StyleSheet.create({
   description: {
     fontSize: 16,
     color: "#696969",
+  },
+  deleteButton: {
+    marginTop: 10,
+    backgroundColor: "#ff6b6b",
+    borderRadius: 8,
+    paddingVertical: 8,
+    alignItems: "center",
+  },
+  deleteButtonText: {
+    fontSize: 16,
+    color: "#fff",
   },
   inputContainer: {
     backgroundColor: "#ffffff",

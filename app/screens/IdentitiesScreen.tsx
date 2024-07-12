@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   View,
   Text,
@@ -9,30 +9,54 @@ import {
   Button,
   StyleSheet,
 } from "react-native";
+import * as FileSystem from 'expo-file-system';
 
-const App = () => {
+const fileUri = FileSystem.documentDirectory + 'idCards.json';
+
+const IdentitiesScreen = () => {
   const [idCards, setIdCards] = useState([]);
   const [showModal, setShowModal] = useState(false);
   const [cardType, setCardType] = useState("");
   const [cardNumber, setCardNumber] = useState("");
   const [expiryDate, setExpiryDate] = useState("");
-  const [issueDate, setIssueDate] = useState(""); // Renamed cvv to issueDate
+  const [issueDate, setIssueDate] = useState("");
+
+  useEffect(() => {
+    loadData();
+  }, []);
+
+  const loadData = async () => {
+    try {
+      const fileInfo = await FileSystem.getInfoAsync(fileUri);
+      if (fileInfo.exists) {
+        const fileData = await FileSystem.readAsStringAsync(fileUri);
+        setIdCards(JSON.parse(fileData));
+      }
+    } catch (error) {
+      console.log('Error loading data:', error);
+    }
+  };
+
+  const saveData = async (data) => {
+    try {
+      await FileSystem.writeAsStringAsync(fileUri, JSON.stringify(data));
+    } catch (error) {
+      console.log('Error saving data:', error);
+    }
+  };
 
   const handleAddCard = () => {
-    if (
-      cardType.trim() !== "" &&
-      cardNumber.trim() !== "" &&
-      expiryDate.trim() !== "" &&
-      issueDate.trim() !== ""
-    ) {
+    if (cardType.trim() !== "" && cardNumber.trim() !== "" && expiryDate.trim() !== "" && issueDate.trim() !== "") {
       const newCard = {
         id: Date.now(),
         type: cardType,
         number: cardNumber,
         expiry: expiryDate,
-        issueDate: issueDate, // Updated key to issueDate
+        issueDate: issueDate,
       };
-      setIdCards([...idCards, newCard]);
+      const updatedCards = [...idCards, newCard];
+      setIdCards(updatedCards);
+      saveData(updatedCards);
       setCardType("");
       setCardNumber("");
       setExpiryDate("");
@@ -41,6 +65,12 @@ const App = () => {
     } else {
       alert("Please enter all details.");
     }
+  };
+
+  const handleDeleteCard = (id) => {
+    const updatedCards = idCards.filter((card) => card.id !== id);
+    setIdCards(updatedCards);
+    saveData(updatedCards);
   };
 
   return (
@@ -52,20 +82,14 @@ const App = () => {
             <Text style={styles.cardInfo}>Card Number: {card.number}</Text>
             <Text style={styles.cardInfo}>Issue Date: {card.issueDate}</Text>
             <Text style={styles.cardInfo}>Expiry Date: {card.expiry}</Text>
-            <TouchableOpacity
-              style={styles.deleteButton}
-              onPress={() => handleDeleteCard(card.id)}
-            >
+            <TouchableOpacity style={styles.deleteButton} onPress={() => handleDeleteCard(card.id)}>
               <Text style={styles.deleteButtonText}>Delete</Text>
             </TouchableOpacity>
           </View>
         ))}
       </ScrollView>
 
-      <TouchableOpacity
-        style={styles.addButton}
-        onPress={() => setShowModal(true)}
-      >
+      <TouchableOpacity style={styles.addButton} onPress={() => setShowModal(true)}>
         <Text style={styles.addButtonText}>Add Identity Card</Text>
       </TouchableOpacity>
 
@@ -87,7 +111,7 @@ const App = () => {
           />
           <TextInput
             style={styles.input}
-            placeholder="Issue Date" // Updated placeholder
+            placeholder="Issue Date"
             value={issueDate}
             onChangeText={(text) => setIssueDate(text)}
           />
@@ -99,11 +123,7 @@ const App = () => {
           />
           <View style={styles.buttonContainer}>
             <Button title="Add Identity Card" onPress={handleAddCard} />
-            <Button
-              title="Cancel"
-              onPress={() => setShowModal(false)}
-              color="#ff6347"
-            />
+            <Button title="Cancel" onPress={() => setShowModal(false)} color="#ff6347" />
           </View>
         </View>
       </Modal>
@@ -194,4 +214,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default App;
+export default IdentitiesScreen;

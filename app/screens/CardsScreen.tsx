@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -10,13 +10,12 @@ import {
   Button,
   StyleSheet,
 } from 'react-native';
+import * as FileSystem from 'expo-file-system';
 
-const App = () => {
-  const [cards, setCards] = useState([
-    { id: 1, name: 'Hitesh ', bankName: 'Bank of America', cardType: 'Credit', cardNumber: '1234 5678 9012 3456', expiryDate: '12/25', cvv: '123' },
-    { id: 2, name: 'John', bankName: 'Chase', cardType: 'Debit', cardNumber: '2345 6789 0123 4567', expiryDate: '11/24', cvv: '456' },
-  ]);
+const fileUri = FileSystem.documentDirectory + 'cards.json';
 
+const CardsScreen = () => {
+  const [cards, setCards] = useState([]);
   const [showModal, setShowModal] = useState(false);
   const [name, setName] = useState('');
   const [bankName, setBankName] = useState('');
@@ -25,9 +24,34 @@ const App = () => {
   const [expiryDate, setExpiryDate] = useState('');
   const [cvv, setCvv] = useState('');
 
+  useEffect(() => {
+    loadData();
+  }, []);
+
+  const loadData = async () => {
+    try {
+      const fileInfo = await FileSystem.getInfoAsync(fileUri);
+      if (fileInfo.exists) {
+        const fileData = await FileSystem.readAsStringAsync(fileUri);
+        setCards(JSON.parse(fileData));
+      }
+    } catch (error) {
+      console.log('Error loading data:', error);
+    }
+  };
+
+  const saveData = async (data) => {
+    try {
+      await FileSystem.writeAsStringAsync(fileUri, JSON.stringify(data));
+    } catch (error) {
+      console.log('Error saving data:', error);
+    }
+  };
+
   const handleDelete = (id) => {
     const updatedCards = cards.filter((card) => card.id !== id);
     setCards(updatedCards);
+    saveData(updatedCards);
   };
 
   const handleAdd = () => {
@@ -36,7 +60,7 @@ const App = () => {
 
   const handleSave = () => {
     const newCard = {
-      id: cards.length + 1,
+      id: Date.now(),
       name,
       bankName,
       cardType,
@@ -44,7 +68,9 @@ const App = () => {
       expiryDate,
       cvv,
     };
-    setCards([...cards, newCard]);
+    const updatedCards = [...cards, newCard];
+    setCards(updatedCards);
+    saveData(updatedCards);
     setShowModal(false);
     setName('');
     setBankName('');
@@ -220,4 +246,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default App;
+export default CardsScreen;
