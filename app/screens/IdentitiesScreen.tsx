@@ -8,8 +8,11 @@ import {
   Modal,
   Button,
   StyleSheet,
+  Alert,
 } from "react-native";
 import * as FileSystem from 'expo-file-system';
+import * as Clipboard from 'expo-clipboard';
+import CryptoJS from "crypto-js";
 
 const fileUri = FileSystem.documentDirectory + 'idCards.json';
 
@@ -20,6 +23,12 @@ const IdentitiesScreen = () => {
   const [cardNumber, setCardNumber] = useState("");
   const [expiryDate, setExpiryDate] = useState("");
   const [issueDate, setIssueDate] = useState("");
+  const [encryptionKey, setEncryptionKey] = useState("");
+  const [showEncryptionKey, setShowEncryptionKey] = useState(false);
+  const [showDecryptionModal, setShowDecryptionModal] = useState(false);
+  const [selectedCard, setSelectedCard] = useState(null);
+  const [decryptionKey, setDecryptionKey] = useState("");
+  const [decryptedCardNumber, setDecryptedCardNumber] = useState("");
 
   useEffect(() => {
     loadData();
@@ -45,7 +54,34 @@ const IdentitiesScreen = () => {
     }
   };
 
+  const handleEncrypt = () => {
+    const key = CryptoJS.lib.WordArray.random(32).toString();
+    setEncryptionKey(key);
+    const encryptedCardNumber = CryptoJS.AES.encrypt(cardNumber, key).toString();
+    setCardNumber(encryptedCardNumber);
+    setShowEncryptionKey(true);
+  };
+
+  const handleDecrypt = () => {
+    try {
+      const decryptedBytes = CryptoJS.AES.decrypt(selectedCard.number, decryptionKey);
+      const decryptedCardNumber = decryptedBytes.toString(CryptoJS.enc.Utf8);
+      if (decryptedCardNumber) {
+        setDecryptedCardNumber(decryptedCardNumber);
+        setShowDecryptionModal(true);
+      } else {
+        Alert.alert("Decryption Error", "Invalid decryption key.");
+      }
+    } catch (error) {
+      Alert.alert("Decryption Error", "Failed to decrypt the card number.");
+    }
+  };
+
   const handleAddCard = () => {
+    if (!encryptionKey) {
+      Alert.alert("Encryption Error", "Please encrypt the card number before saving.");
+      return;
+    }
     if (cardType.trim() !== "" && cardNumber.trim() !== "" && expiryDate.trim() !== "" && issueDate.trim() !== "") {
       const newCard = {
         id: Date.now(),
@@ -53,6 +89,7 @@ const IdentitiesScreen = () => {
         number: cardNumber,
         expiry: expiryDate,
         issueDate: issueDate,
+        encryptionKey: encryptionKey,
       };
       const updatedCards = [...idCards, newCard];
       setIdCards(updatedCards);
@@ -61,16 +98,42 @@ const IdentitiesScreen = () => {
       setCardNumber("");
       setExpiryDate("");
       setIssueDate("");
+      setEncryptionKey("");
+      setShowEncryptionKey(false);
       setShowModal(false);
     } else {
-      alert("Please enter all details.");
+      Alert.alert("Input Error", "Please enter all details.");
     }
+  };
+
+  const handleCopyKey = () => {
+    Clipboard.setString(encryptionKey);
+    Alert.alert("Copied to Clipboard", "The encryption key has been copied to the clipboard.");
   };
 
   const handleDeleteCard = (id) => {
     const updatedCards = idCards.filter((card) => card.id !== id);
     setIdCards(updatedCards);
     saveData(updatedCards);
+  };
+
+  const handleView = (card) => {
+    setSelectedCard(card);
+    setShowDecryptionModal(true);
+  };
+
+  const handleCloseDecryptionModal = () => {
+    if (decryptionKey === selectedCard.encryptionKey) {
+      const encryptedCardNumber = CryptoJS.AES.encrypt(decryptedCardNumber, decryptionKey).toString();
+      const updatedCards = idCards.map((card) =>
+        card.id === selectedCard.id ? { ...card, number: encryptedCardNumber } : card
+      );
+      setIdCards(updatedCards);
+      saveData(updatedCards);
+    }
+    setShowDecryptionModal(false);
+    setDecryptionKey("");
+    setDecryptedCardNumber("");
   };
 
   return (
@@ -82,9 +145,14 @@ const IdentitiesScreen = () => {
             <Text style={styles.cardInfo}>Card Number: {card.number}</Text>
             <Text style={styles.cardInfo}>Issue Date: {card.issueDate}</Text>
             <Text style={styles.cardInfo}>Expiry Date: {card.expiry}</Text>
-            <TouchableOpacity style={styles.deleteButton} onPress={() => handleDeleteCard(card.id)}>
-              <Text style={styles.deleteButtonText}>Delete</Text>
-            </TouchableOpacity>
+            <View style={styles.cardActions}>
+              <TouchableOpacity style={styles.actionButton} onPress={() => handleView(card)}>
+                <Text style={styles.actionButtonText}>View</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.deleteButton} onPress={() => handleDeleteCard(card.id)}>
+                <Text style={styles.deleteButtonText}>Delete</Text>
+              </TouchableOpacity>
+            </View>
           </View>
         ))}
       </ScrollView>
@@ -121,10 +189,32 @@ const IdentitiesScreen = () => {
             value={expiryDate}
             onChangeText={(text) => setExpiryDate(text)}
           />
+          {showEncryptionKey && (
+            <View style={styles.encryptionKeyContainer}>
+              <Text style={styles.encryptionKeyText}>Encryption Key: {encryptionKey}</Text>
+              <Button title="Copy Key" onPress={handleCopyKey} />
+            </View>
+          )}
           <View style={styles.buttonContainer}>
+            <Button title="Encrypt" onPress={handleEncrypt} />
             <Button title="Add Identity Card" onPress={handleAddCard} />
             <Button title="Cancel" onPress={() => setShowModal(false)} color="#ff6347" />
           </View>
+        </View>
+      </Modal>
+
+      <Modal visible={showDecryptionModal} animationType="slide">
+        <View style={styles.modalContainer}>
+          <Text style={styles.modalTitle}>Enter Decryption Key</Text>
+          <TextInput
+            style={styles.input}
+            placeholder="Decryption Key"
+            value={decryptionKey}
+            onChangeText={(text) => setDecryptionKey(text)}
+          />
+          <Button title="Decrypt" onPress={handleDecrypt} />
+          <Text style={styles.decryptedCardNumber}>{decryptedCardNumber}</Text>
+          <Button title="Close" onPress={handleCloseDecryptionModal} />
         </View>
       </Modal>
     </View>
@@ -162,6 +252,21 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: "#696969",
     marginBottom: 4,
+  },
+  cardActions: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    marginTop: 8,
+  },
+  actionButton: {
+    backgroundColor: "#007bff",
+    borderRadius: 5,
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+  },
+  actionButtonText: {
+    color: "#ffffff",
+    fontSize: 16,
   },
   deleteButton: {
     backgroundColor: "#ff6347",
@@ -211,6 +316,20 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-around",
     marginTop: 20,
+  },
+  encryptionKeyContainer: {
+    marginBottom: 20,
+    alignItems: 'center',
+  },
+  encryptionKeyText: {
+    fontSize: 16,
+    marginBottom: 10,
+  },
+  decryptedCardNumber: {
+    fontSize: 18,
+    color: "#4682b4",
+    textAlign: "center",
+    marginBottom: 20,
   },
 });
 

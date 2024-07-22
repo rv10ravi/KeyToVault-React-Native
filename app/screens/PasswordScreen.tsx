@@ -1,3 +1,4 @@
+import 'react-native-get-random-values';
 import React, { useState, useEffect } from "react";
 import {
   View,
@@ -8,8 +9,11 @@ import {
   Button,
   StyleSheet,
   TouchableOpacity,
+  Alert,
 } from "react-native";
 import * as FileSystem from "expo-file-system";
+import * as Clipboard from 'expo-clipboard';
+import CryptoJS from "crypto-js";
 
 const fileUri = FileSystem.documentDirectory + "passwords.json";
 
@@ -19,6 +23,11 @@ const App = () => {
   const [socialMediaName, setSocialMediaName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [encryptionKey, setEncryptionKey] = useState("");
+  const [showDecryptModal, setShowDecryptModal] = useState(false);
+  const [selectedItem, setSelectedItem] = useState(null);
+  const [decryptionKey, setDecryptionKey] = useState("");
+  const [showEncryptionKey, setShowEncryptionKey] = useState(false);
 
   useEffect(() => {
     loadData();
@@ -51,8 +60,8 @@ const App = () => {
   };
 
   const handleView = (item) => {
-    console.log(item);
-    // Logic to view the item
+    setSelectedItem(item);
+    setShowDecryptModal(true);
   };
 
   const handleAdd = () => {
@@ -60,15 +69,24 @@ const App = () => {
   };
 
   const handleEncrypt = () => {
-    // Logic to encrypt the password
+    const key = CryptoJS.lib.WordArray.random(32).toString();
+    setEncryptionKey(key);
+    const encryptedPassword = CryptoJS.AES.encrypt(password, key).toString();
+    setPassword(encryptedPassword);
+    setShowEncryptionKey(true);
   };
 
   const handleSave = () => {
+    if (!encryptionKey) {
+      Alert.alert("Encryption Error", "Please encrypt the password before saving.");
+      return;
+    }
     const newItem = {
       id: Date.now(),
       socialMediaName,
       email,
       password,
+      encryptionKey,
     };
     const updatedData = [...data, newItem];
     setData(updatedData);
@@ -77,6 +95,43 @@ const App = () => {
     setSocialMediaName("");
     setEmail("");
     setPassword("");
+    setEncryptionKey("");
+    setShowEncryptionKey(false);
+  };
+
+  const handleDecrypt = () => {
+    if (selectedItem) {
+      try {
+        const bytes = CryptoJS.AES.decrypt(selectedItem.password, decryptionKey);
+        const decryptedPassword = bytes.toString(CryptoJS.enc.Utf8);
+        Alert.alert("Decrypted Password", decryptedPassword, [
+          {
+            text: "Close",
+            onPress: () => {
+              const reEncryptedPassword = CryptoJS.AES.encrypt(decryptedPassword, selectedItem.encryptionKey).toString();
+              const updatedItem = {
+                ...selectedItem,
+                password: reEncryptedPassword,
+              };
+              const updatedData = data.map((item) =>
+                item.id === updatedItem.id ? updatedItem : item
+              );
+              setData(updatedData);
+              saveData(updatedData);
+              setShowDecryptModal(false);
+              setDecryptionKey("");
+            },
+          },
+        ]);
+      } catch (error) {
+        Alert.alert("Decryption Error", "Invalid encryption key.");
+      }
+    }
+  };
+
+  const handleCopyKey = () => {
+    Clipboard.setString(encryptionKey);
+    Alert.alert("Copied to Clipboard", "The encryption key has been copied to the clipboard.");
   };
 
   return (
@@ -130,10 +185,29 @@ const App = () => {
             onChangeText={(text) => setPassword(text)}
             secureTextEntry
           />
+          {showEncryptionKey && (
+            <View style={styles.encryptionKeyContainer}>
+              <Text style={styles.encryptionKeyText}>Encryption Key: {encryptionKey}</Text>
+              <Button title="Copy Key" onPress={handleCopyKey} />
+            </View>
+          )}
           <View style={styles.modalActions}>
             <Button title="Encrypt" onPress={handleEncrypt} />
             <Button title="Save" onPress={handleSave} />
           </View>
+        </View>
+      </Modal>
+
+      <Modal visible={showDecryptModal} animationType="slide">
+        <View style={styles.modalContainer}>
+          <TextInput
+            style={styles.input}
+            placeholder="Enter Encryption Key"
+            value={decryptionKey}
+            onChangeText={(text) => setDecryptionKey(text)}
+            secureTextEntry
+          />
+          <Button title="Decrypt" onPress={handleDecrypt} />
         </View>
       </Modal>
     </View>
@@ -222,6 +296,14 @@ const styles = StyleSheet.create({
     justifyContent: "space-around",
     marginTop: 16,
     width: "100%",
+  },
+  encryptionKeyContainer: {
+    marginTop: 16,
+    alignItems: "center",
+  },
+  encryptionKeyText: {
+    fontSize: 16,
+    marginBottom: 8,
   },
 });
 

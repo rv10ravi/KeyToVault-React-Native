@@ -9,8 +9,11 @@ import {
   TextInput,
   Button,
   StyleSheet,
+  Alert,
 } from 'react-native';
 import * as FileSystem from 'expo-file-system';
+import CryptoJS from 'crypto-js';
+import * as Clipboard from 'expo-clipboard'; 
 
 const fileUri = FileSystem.documentDirectory + 'cards.json';
 
@@ -23,6 +26,12 @@ const CardsScreen = () => {
   const [cardNumber, setCardNumber] = useState('');
   const [expiryDate, setExpiryDate] = useState('');
   const [cvv, setCvv] = useState('');
+  const [encryptionKey, setEncryptionKey] = useState('');
+  const [showEncryptionKey, setShowEncryptionKey] = useState(false);
+  const [showDecryptionModal, setShowDecryptionModal] = useState(false);
+  const [selectedCard, setSelectedCard] = useState(null);
+  const [decryptionKey, setDecryptionKey] = useState('');
+  const [decryptedCardNumber, setDecryptedCardNumber] = useState('');
 
   useEffect(() => {
     loadData();
@@ -48,17 +57,34 @@ const CardsScreen = () => {
     }
   };
 
-  const handleDelete = (id) => {
-    const updatedCards = cards.filter((card) => card.id !== id);
-    setCards(updatedCards);
-    saveData(updatedCards);
+  const handleEncrypt = () => {
+    const key = CryptoJS.lib.WordArray.random(32).toString();
+    setEncryptionKey(key);
+    const encryptedCardNumber = CryptoJS.AES.encrypt(cardNumber, key).toString();
+    setCardNumber(encryptedCardNumber);
+    setShowEncryptionKey(true);
   };
 
-  const handleAdd = () => {
-    setShowModal(true);
+  const handleDecrypt = () => {
+    try {
+      const decryptedBytes = CryptoJS.AES.decrypt(selectedCard.cardNumber, decryptionKey);
+      const decryptedCardNumber = decryptedBytes.toString(CryptoJS.enc.Utf8);
+      if (decryptedCardNumber) {
+        setDecryptedCardNumber(decryptedCardNumber);
+        setShowDecryptionModal(true);
+      } else {
+        Alert.alert("Decryption Error", "Invalid decryption key.");
+      }
+    } catch (error) {
+      Alert.alert("Decryption Error", "Failed to decrypt the card number.");
+    }
   };
 
   const handleSave = () => {
+    if (!encryptionKey) {
+      Alert.alert("Encryption Error", "Please encrypt the card number before saving.");
+      return;
+    }
     const newCard = {
       id: Date.now(),
       name,
@@ -67,6 +93,7 @@ const CardsScreen = () => {
       cardNumber,
       expiryDate,
       cvv,
+      encryptionKey,
     };
     const updatedCards = [...cards, newCard];
     setCards(updatedCards);
@@ -78,6 +105,42 @@ const CardsScreen = () => {
     setCardNumber('');
     setExpiryDate('');
     setCvv('');
+    setEncryptionKey('');
+    setShowEncryptionKey(false);
+  };
+
+  const handleDelete = (id) => {
+    const updatedCards = cards.filter((card) => card.id !== id);
+    setCards(updatedCards);
+    saveData(updatedCards);
+  };
+
+  const handleAdd = () => {
+    setShowModal(true);
+  };
+
+  const handleView = (card) => {
+    setSelectedCard(card);
+    setShowDecryptionModal(true);
+  };
+
+  const handleCloseDecryptionModal = () => {
+    if (decryptionKey === selectedCard.encryptionKey) {
+      const encryptedCardNumber = CryptoJS.AES.encrypt(decryptedCardNumber, decryptionKey).toString();
+      const updatedCards = cards.map((card) =>
+        card.id === selectedCard.id ? { ...card, cardNumber: encryptedCardNumber } : card
+      );
+      setCards(updatedCards);
+      saveData(updatedCards);
+    }
+    setShowDecryptionModal(false);
+    setDecryptionKey('');
+    setDecryptedCardNumber('');
+  };
+
+  const handleCopyKey = () => {
+    Clipboard.setString(encryptionKey);
+    Alert.alert('Key Copied', 'Encryption key has been copied to clipboard.');
   };
 
   return (
@@ -92,6 +155,9 @@ const CardsScreen = () => {
             <Text style={styles.cardText}>Expiry: {card.expiryDate}</Text>
             <Text style={styles.cardText}>CVV: {card.cvv}</Text>
             <View style={styles.cardActions}>
+              <TouchableOpacity onPress={() => handleView(card)} style={styles.viewButton}>
+                <Text style={styles.buttonText}>View</Text>
+              </TouchableOpacity>
               <TouchableOpacity onPress={() => handleDelete(card.id)} style={styles.deleteButton}>
                 <Text style={styles.buttonText}>Delete</Text>
               </TouchableOpacity>
@@ -149,9 +215,32 @@ const CardsScreen = () => {
             keyboardType="numeric"
             secureTextEntry
           />
+          {showEncryptionKey && (
+            <View style={styles.encryptionKeyContainer}>
+              <Text style={styles.encryptionKeyText}>Encryption Key: {encryptionKey}</Text>
+              <Button title="Copy Key" onPress={handleCopyKey} />
+            </View>
+          )}
           <View style={styles.modalActions}>
+            <Button title="Encrypt" onPress={handleEncrypt} />
             <Button title="Save" onPress={handleSave} />
+            <Button title="Cancel" onPress={() => setShowModal(false)} />
           </View>
+        </View>
+      </Modal>
+
+      <Modal visible={showDecryptionModal} animationType="slide">
+        <View style={styles.modalContainer}>
+          <TextInput
+            style={styles.input}
+            placeholder="Enter Decryption Key"
+            value={decryptionKey}
+            onChangeText={(text) => setDecryptionKey(text)}
+            secureTextEntry
+          />
+          <Button title="Decrypt" onPress={handleDecrypt} />
+          <Text style={styles.decryptedCardNumber}>{decryptedCardNumber}</Text>
+          <Button title="Close" onPress={handleCloseDecryptionModal} />
         </View>
       </Modal>
     </View>
@@ -198,6 +287,12 @@ const styles = StyleSheet.create({
     padding: 10,
     backgroundColor: '#ff6347',
     borderRadius: 5,
+    marginLeft: 10,
+  },
+  viewButton: {
+    padding: 10,
+    backgroundColor: '#4682b4',
+    borderRadius: 5,
   },
   buttonText: {
     color: '#fff',
@@ -243,6 +338,19 @@ const styles = StyleSheet.create({
     justifyContent: 'space-around',
     marginTop: 20,
     width: '100%',
+  },
+  encryptionKeyContainer: {
+    marginVertical: 20,
+  },
+  encryptionKeyText: {
+    fontSize: 16,
+    marginBottom: 10,
+  },
+  decryptedCardNumber: {
+    fontSize: 18,
+    color: '#4682b4',
+    textAlign: 'center',
+    marginVertical: 20,
   },
 });
 

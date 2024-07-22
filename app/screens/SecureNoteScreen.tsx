@@ -1,14 +1,19 @@
+import "react-native-get-random-values";
 import React, { useState, useEffect } from "react";
 import {
   View,
   Text,
   TextInput,
-  TouchableOpacity,
   ScrollView,
+  Modal,
+  TouchableOpacity,
   StyleSheet,
   Alert,
+  Button
 } from "react-native";
-import * as FileSystem from 'expo-file-system';
+import * as FileSystem from "expo-file-system";
+import * as Clipboard from "expo-clipboard";
+import CryptoJS from "crypto-js";
 
 const filePath = FileSystem.documentDirectory + "secureNotes.json";
 
@@ -16,6 +21,12 @@ const App = () => {
   const [items, setItems] = useState([]);
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
+  const [showModal, setShowModal] = useState(false);
+  const [showDecryptModal, setShowDecryptModal] = useState(false);
+  const [selectedItem, setSelectedItem] = useState(null);
+  const [encryptionKey, setEncryptionKey] = useState("");
+  const [decryptionKey, setDecryptionKey] = useState("");
+  const [showEncryptionKey, setShowEncryptionKey] = useState(false);
 
   useEffect(() => {
     loadItems();
@@ -26,11 +37,12 @@ const App = () => {
       const fileExists = await FileSystem.getInfoAsync(filePath);
       if (fileExists.exists) {
         const fileContents = await FileSystem.readAsStringAsync(filePath);
-        setItems(JSON.parse(fileContents));
+        setItems(fileContents ? JSON.parse(fileContents) : []);
+      } else {
+        setItems([]);
       }
     } catch (error) {
-      Alert.alert("Error", "Failed to load items");
-      console.error(error);
+      console.log("Error loading items:", error);
     }
   };
 
@@ -38,32 +50,87 @@ const App = () => {
     try {
       await FileSystem.writeAsStringAsync(filePath, JSON.stringify(items));
     } catch (error) {
-      Alert.alert("Error", "Failed to save items");
-      console.error(error);
+      console.log("Error saving items:", error);
     }
   };
 
-  const handleAddItem = async () => {
-    if (title.trim() !== "" && description.trim() !== "") {
-      const newItem = {
-        id: Date.now(),
-        title: title,
-        description: description,
-      };
-      const updatedItems = [...items, newItem];
-      setItems(updatedItems);
-      setTitle("");
-      setDescription("");
-      await saveItems(updatedItems);
-    } else {
-      Alert.alert("Error", "Please enter both title and description.");
-    }
+  const handleAdd = () => {
+    setShowModal(true);
   };
 
-  const handleDeleteItem = async (id) => {
+  const handleEncrypt = () => {
+    const key = CryptoJS.lib.WordArray.random(32).toString();
+    setEncryptionKey(key);
+    const encryptedDescription = CryptoJS.AES.encrypt(description, key).toString();
+    setDescription(encryptedDescription);
+    setShowEncryptionKey(true);
+  };
+
+  const handleSave = () => {
+    if (!encryptionKey) {
+      Alert.alert("Encryption Error", "Please encrypt the description before saving.");
+      return;
+    }
+    const newItem = {
+      id: Date.now(),
+      title,
+      description,
+      encryptionKey,
+    };
+    const updatedItems = [...items, newItem];
+    setItems(updatedItems);
+    saveItems(updatedItems);
+    setShowModal(false);
+    setTitle("");
+    setDescription("");
+    setEncryptionKey("");
+    setShowEncryptionKey(false);
+  };
+
+  const handleDelete = (id) => {
     const updatedItems = items.filter((item) => item.id !== id);
     setItems(updatedItems);
-    await saveItems(updatedItems);
+    saveItems(updatedItems);
+  };
+
+  const handleView = (item) => {
+    setSelectedItem(item);
+    setShowDecryptModal(true);
+  };
+
+  const handleDecrypt = () => {
+    if (selectedItem) {
+      try {
+        const bytes = CryptoJS.AES.decrypt(selectedItem.description, decryptionKey);
+        const decryptedDescription = bytes.toString(CryptoJS.enc.Utf8);
+        Alert.alert("Decrypted Description", decryptedDescription, [
+          {
+            text: "Close",
+            onPress: () => {
+              const reEncryptedDescription = CryptoJS.AES.encrypt(decryptedDescription, selectedItem.encryptionKey).toString();
+              const updatedItem = {
+                ...selectedItem,
+                description: reEncryptedDescription,
+              };
+              const updatedItems = items.map((item) =>
+                item.id === updatedItem.id ? updatedItem : item
+              );
+              setItems(updatedItems);
+              saveItems(updatedItems);
+              setShowDecryptModal(false);
+              setDecryptionKey("");
+            },
+          },
+        ]);
+      } catch (error) {
+        Alert.alert("Decryption Error", "Invalid decryption key.");
+      }
+    }
+  };
+
+  const handleCopyKey = () => {
+    Clipboard.setString(encryptionKey);
+    Alert.alert("Copied to Clipboard", "The encryption key has been copied to the clipboard.");
   };
 
   return (
@@ -71,36 +138,71 @@ const App = () => {
       <ScrollView contentContainerStyle={styles.scrollView}>
         {items.map((item) => (
           <View key={item.id} style={styles.card}>
-            <Text style={styles.title}>{item.title}</Text>
-            <Text style={styles.description}>{item.description}</Text>
-            <TouchableOpacity
-              style={styles.deleteButton}
-              onPress={() => handleDeleteItem(item.id)}
-            >
-              <Text style={styles.deleteButtonText}>Delete</Text>
-            </TouchableOpacity>
+            <Text style={styles.cardTitle}>{item.title}</Text>
+            <Text style={styles.cardText}>Description: {item.description}</Text>
+            <View style={styles.cardActions}>
+              <TouchableOpacity
+                onPress={() => handleView(item)}
+                style={styles.button}
+              >
+                <Text style={styles.buttonText}>View</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                onPress={() => handleDelete(item.id)}
+                style={styles.button}
+              >
+                <Text style={styles.buttonText}>Delete</Text>
+              </TouchableOpacity>
+            </View>
           </View>
         ))}
       </ScrollView>
 
-      <View style={styles.inputContainer}>
-        <TextInput
-          style={styles.input}
-          placeholder="Title"
-          value={title}
-          onChangeText={(text) => setTitle(text)}
-        />
-        <TextInput
-          style={[styles.input, styles.descriptionInput]}
-          placeholder="Description"
-          multiline
-          value={description}
-          onChangeText={(text) => setDescription(text)}
-        />
-        <TouchableOpacity style={styles.addButton} onPress={handleAddItem}>
-          <Text style={styles.addButtonText}>Add</Text>
-        </TouchableOpacity>
-      </View>
+      <TouchableOpacity style={styles.floatingButton} onPress={handleAdd}>
+        <Text style={styles.floatingButtonText}>+</Text>
+      </TouchableOpacity>
+
+      <Modal visible={showModal} animationType="slide">
+        <View style={styles.modalContainer}>
+          <TextInput
+            style={styles.input}
+            placeholder="Title"
+            value={title}
+            onChangeText={(text) => setTitle(text)}
+          />
+          <TextInput
+            style={styles.input}
+            placeholder="Description"
+            value={description}
+            onChangeText={(text) => setDescription(text)}
+            secureTextEntry
+          />
+          {showEncryptionKey && (
+            <View style={styles.encryptionKeyContainer}>
+              <Text style={styles.encryptionKeyText}>Encryption Key: {encryptionKey}</Text>
+              <Button title="Copy Key" onPress={handleCopyKey} />
+            </View>
+          )}
+          <View style={styles.modalActions}>
+            <Button title="Encrypt" onPress={handleEncrypt} />
+            <Button title="Save" onPress={handleSave} />
+          </View>
+        </View>
+      </Modal>
+
+      <Modal visible={showDecryptModal} animationType="slide">
+        <View style={styles.modalContainer}>
+          <TextInput
+            style={styles.input}
+            placeholder="Enter Decryption Key"
+            value={decryptionKey}
+            onChangeText={(text) => setDecryptionKey(text)}
+            secureTextEntry
+          />
+          <Button title="Decrypt" onPress={handleDecrypt} />
+          <Button title="Cancel" onPress={() => setShowDecryptModal(false)} />
+        </View>
+      </Modal>
     </View>
   );
 };
@@ -108,78 +210,88 @@ const App = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#f0f8ff",
-    paddingVertical: 20,
-    paddingHorizontal: 16,
-    marginTop: 30,
+    padding: 10,
   },
   scrollView: {
-    flexGrow: 1,
+    paddingBottom: 20,
   },
   card: {
-    backgroundColor: "#ffffff",
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 16,
+    backgroundColor: "#fff",
+    padding: 15,
+    marginBottom: 10,
+    borderRadius: 10,
     shadowColor: "#000",
-    shadowOpacity: 0.2,
-    shadowRadius: 10,
-    elevation: 5,
+    shadowOpacity: 0.1,
+    shadowRadius: 5,
+    shadowOffset: { width: 0, height: 2 },
+    elevation: 2,
   },
-  title: {
+  cardTitle: {
     fontSize: 18,
     fontWeight: "bold",
-    color: "#4682b4",
-    marginBottom: 8,
   },
-  description: {
-    fontSize: 16,
-    color: "#696969",
-  },
-  deleteButton: {
+  cardText: {
     marginTop: 10,
-    backgroundColor: "#ff6b6b",
-    borderRadius: 8,
-    paddingVertical: 8,
-    alignItems: "center",
-  },
-  deleteButtonText: {
     fontSize: 16,
-    color: "#fff",
   },
-  inputContainer: {
-    backgroundColor: "#ffffff",
-    borderRadius: 12,
-    padding: 16,
-    marginTop: 16,
+  cardActions: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    marginTop: 10,
+  },
+  button: {
+    backgroundColor: "#007bff",
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    borderRadius: 5,
+  },
+  buttonText: {
+    color: "#fff",
+    fontSize: 16,
+  },
+  floatingButton: {
+    position: "absolute",
+    bottom: 20,
+    right: 20,
+    backgroundColor: "#007bff",
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    justifyContent: "center",
+    alignItems: "center",
     shadowColor: "#000",
-    shadowOpacity: 0.2,
-    shadowRadius: 10,
-    elevation: 5,
+    shadowOpacity: 0.3,
+    shadowRadius: 5,
+    shadowOffset: { width: 0, height: 2 },
+    elevation: 2,
+  },
+  floatingButtonText: {
+    color: "#fff",
+    fontSize: 24,
+  },
+  modalContainer: {
+    flex: 1,
+    padding: 20,
+    justifyContent: "center",
   },
   input: {
     borderWidth: 1,
-    borderColor: "#dcdcdc",
-    borderRadius: 8,
-    padding: 12,
-    marginBottom: 12,
+    borderColor: "#ccc",
+    padding: 10,
+    marginBottom: 10,
+    borderRadius: 5,
     fontSize: 16,
-    backgroundColor: "#f9f9f9",
   },
-  descriptionInput: {
-    height: 100,
-    textAlignVertical: "top",
+  modalActions: {
+    flexDirection: "row",
+    justifyContent: "space-around",
   },
-  addButton: {
-    backgroundColor: "#4682b4",
-    borderRadius: 8,
-    paddingVertical: 12,
-    alignItems: "center",
+  encryptionKeyContainer: {
+    marginBottom: 10,
   },
-  addButtonText: {
-    fontSize: 18,
-    fontWeight: "bold",
-    color: "#ffffff",
+  encryptionKeyText: {
+    fontSize: 16,
+    marginBottom: 5,
   },
 });
 
