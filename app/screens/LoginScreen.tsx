@@ -16,9 +16,16 @@ const LoginScreen: React.FC<{ navigation: any }> = ({ navigation }) => {
 
   const handleLogin = async () => {
     try {
-      await signInWithEmailAndPassword(auth, email, password);
-      Alert.alert("Success", "Logged in successfully");
-      navigation.navigate("Tabs");
+      const userCredential = await signInWithEmailAndPassword(auth, email, password);
+      const user = userCredential.user;
+
+      if (user.emailVerified) {
+        Alert.alert("Success", "Logged in successfully");
+        navigation.navigate("Tabs");
+      } else {
+        await auth.signOut();
+        Alert.alert("Email not verified", "Please verify your email before logging in.");
+      }
     } catch (error: any) {
       Alert.alert("Login Error", error.message);
     }

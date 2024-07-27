@@ -20,6 +20,7 @@
     "@react-navigation/native": "^6.1.17",
     "@react-navigation/stack": "^6.4.0",
     "crypto-js": "^4.2.0",
+    "cryptojs": "^2.5.3",
     "expo": "~51.0.22",
     "expo-clipboard": "~6.0.3",
     "expo-constants": "~16.0.2",

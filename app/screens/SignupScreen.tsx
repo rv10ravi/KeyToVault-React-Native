@@ -7,7 +7,7 @@ import {
   TouchableOpacity,
   Alert,
 } from "react-native";
-import { getAuth, createUserWithEmailAndPassword } from "firebase/auth";
+import { createUserWithEmailAndPassword, sendEmailVerification } from "firebase/auth";
 import { auth } from "../../firebaseConfig"; // Updated import
 
 const SignupScreen: React.FC<{ navigation: any }> = ({ navigation }) => {
@@ -22,8 +22,16 @@ const SignupScreen: React.FC<{ navigation: any }> = ({ navigation }) => {
     }
 
     try {
-      await createUserWithEmailAndPassword(auth, email, password);
-      Alert.alert("Success", "Account created successfully");
+      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+      const user = userCredential.user;
+
+      // Send email verification
+      await sendEmailVerification(user);
+      Alert.alert("Success", "Account created successfully. Please check your email for verification.");
+
+      // Optionally, you can log out the user to prevent them from accessing the app before verification
+      await auth.signOut();
+
       navigation.navigate("Login");
     } catch (error: any) {
       Alert.alert("Signup Error", error.message);
