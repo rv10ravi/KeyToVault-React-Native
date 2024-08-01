@@ -6,9 +6,11 @@ import {
   Text,
   FlatList,
   TouchableOpacity,
+  Settings,
 } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import { StackNavigationProp } from "@react-navigation/stack";
+import { Ionicons } from "@expo/vector-icons";
 
 type RootStackParamList = {
   Home: undefined;
@@ -17,6 +19,7 @@ type RootStackParamList = {
   "Secure Note": undefined;
   Cards: undefined;
   Identities: undefined;
+  Settings: undefined;
 };
 
 type HomeScreenNavigationProp = StackNavigationProp<RootStackParamList, "Home">;
@@ -74,6 +77,12 @@ export default function HomeScreen() {
         )}
         keyExtractor={(item) => item.key}
       />
+      <TouchableOpacity
+        style={styles.floatingButton}
+        onPress={() => navigation.navigate("Settings")}
+      >
+        <Ionicons name="settings-outline" size={24} color="white" />
+      </TouchableOpacity>
     </View>
   );
 }
@@ -112,5 +121,17 @@ const styles = StyleSheet.create({
   itemText: {
     fontSize: 18,
     color: "#1F2937",
+  },
+  floatingButton: {
+    position: "absolute",
+    bottom: 20,
+    right: 20,
+    backgroundColor: "#6200EA",
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    justifyContent: "center",
+    alignItems: "center",
+    elevation: 5,
   },
 });

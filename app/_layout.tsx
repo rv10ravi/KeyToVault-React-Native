@@ -15,6 +15,7 @@ import CardsScreen from "./screens/CardsScreen";
 import FoldersScreen from "./screens/FoldersScreen";
 import SecureNoteScreen from "./screens/SecureNoteScreen";
 import IdentitiesScreen from "./screens/IdentitiesScreen";
+import SettingsScreen from "./screens/SettingsScreen";
 import { useColorScheme } from "@/hooks/useColorScheme";
 
 // Prevent the splash screen from auto-hiding before asset loading is complete.
@@ -30,6 +31,7 @@ type RootStackParamList = {
   Folders: undefined;
   Notes: undefined;
   Identities: undefined;
+  Settings: undefined;
 };
 
 const Stack = createStackNavigator<RootStackParamList>();
@@ -94,6 +96,11 @@ export default function RootLayout() {
         <Stack.Screen
           name="Identities"
           component={IdentitiesScreen}
+          options={{ headerShown: false }}
+        />
+        <Stack.Screen
+          name="Settings"
+          component={SettingsScreen}
           options={{ headerShown: false }}
         />
       </Stack.Navigator>
