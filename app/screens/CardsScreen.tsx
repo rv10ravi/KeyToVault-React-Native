@@ -250,7 +250,8 @@ const CardsScreen = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f0f8ff',
+    backgroundColor: '#f8f9fa',
+    paddingTop: 50,
   },
   scrollView: {
     padding: 16,
@@ -260,7 +261,7 @@ const styles = StyleSheet.create({
     marginVertical: 10,
     backgroundColor: '#ffffff',
     borderRadius: 12,
-    borderColor: '#4682b4',
+    borderColor: '#007bff',
     borderWidth: 2,
     shadowColor: '#000',
     shadowOpacity: 0.2,
@@ -270,12 +271,12 @@ const styles = StyleSheet.create({
   cardTitle: {
     fontSize: 20,
     fontWeight: 'bold',
-    color: '#4682b4',
+    color: '#007bff',
     marginBottom: 10,
   },
   cardText: {
     fontSize: 16,
-    color: '#696969',
+    color: '#495057',
     marginBottom: 6,
   },
   cardActions: {
@@ -285,13 +286,13 @@ const styles = StyleSheet.create({
   },
   deleteButton: {
     padding: 10,
-    backgroundColor: '#ff6347',
+    backgroundColor: '#dc3545',
     borderRadius: 5,
     marginLeft: 10,
   },
   viewButton: {
     padding: 10,
-    backgroundColor: '#4682b4',
+    backgroundColor: '#007bff',
     borderRadius: 5,
   },
   buttonText: {
@@ -305,7 +306,7 @@ const styles = StyleSheet.create({
     width: 56,
     height: 56,
     borderRadius: 28,
-    backgroundColor: '#4682b4',
+    backgroundColor: '#007bff',
     justifyContent: 'center',
     alignItems: 'center',
     shadowColor: '#000',
@@ -322,14 +323,14 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     padding: 16,
-    backgroundColor: '#f0f8ff',
+    backgroundColor: '#f8f9fa',
   },
   input: {
     width: '100%',
     padding: 15,
     marginVertical: 10,
     borderRadius: 8,
-    borderColor: '#ddd',
+    borderColor: '#ced4da',
     borderWidth: 1,
     backgroundColor: '#ffffff',
   },
@@ -341,14 +342,16 @@ const styles = StyleSheet.create({
   },
   encryptionKeyContainer: {
     marginVertical: 20,
+    alignItems: 'center',
   },
   encryptionKeyText: {
     fontSize: 16,
     marginBottom: 10,
+    color: '#007bff',
   },
   decryptedCardNumber: {
     fontSize: 18,
-    color: '#4682b4',
+    color: '#007bff',
     textAlign: 'center',
     marginVertical: 20,
   },

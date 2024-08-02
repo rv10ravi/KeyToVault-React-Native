@@ -6,9 +6,10 @@ import {
   TextInput,
   TouchableOpacity,
   Alert,
+  ImageBackground,
 } from "react-native";
 import { getAuth, signInWithEmailAndPassword } from "firebase/auth";
-import { auth } from "../../firebaseConfig"; // Updated import
+import { auth } from "../../firebaseConfig";
 
 const LoginScreen: React.FC<{ navigation: any }> = ({ navigation }) => {
   const [email, setEmail] = useState<string>("");
@@ -32,46 +33,64 @@ const LoginScreen: React.FC<{ navigation: any }> = ({ navigation }) => {
   };
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Login</Text>
-      <TextInput
-        style={styles.input}
-        placeholder="Email"
-        placeholderTextColor="#888"
-        keyboardType="email-address"
-        autoCapitalize="none"
-        onChangeText={setEmail}
-        value={email}
-      />
-      <TextInput
-        style={styles.input}
-        placeholder="Password"
-        placeholderTextColor="#888"
-        secureTextEntry
-        onChangeText={setPassword}
-        value={password}
-      />
-      <TouchableOpacity style={styles.button} onPress={handleLogin}>
-        <Text style={styles.buttonText}>Login</Text>
-      </TouchableOpacity>
-      <TouchableOpacity onPress={() => navigation.navigate("Signup")}>
-        <Text style={styles.linkText}>Don't have an account? Sign Up</Text>
-      </TouchableOpacity>
-    </View>
+    <ImageBackground
+      source={require("../../assets/images/bg.jpg")}
+      style={styles.background}
+    >
+      <View style={styles.container}>
+        <Text style={styles.title}>Login</Text>
+        <TextInput
+          style={styles.input}
+          placeholder="Email"
+          placeholderTextColor="#888"
+          keyboardType="email-address"
+          autoCapitalize="none"
+          onChangeText={setEmail}
+          value={email}
+        />
+        <TextInput
+          style={styles.input}
+          placeholder="Password"
+          placeholderTextColor="#888"
+          secureTextEntry
+          onChangeText={setPassword}
+          value={password}
+        />
+        <TouchableOpacity style={styles.button} onPress={handleLogin}>
+          <Text style={styles.buttonText}>Login</Text>
+        </TouchableOpacity>
+        <TouchableOpacity onPress={() => navigation.navigate("Signup")}>
+          <Text style={styles.linkText}>Don't have an account? Sign Up</Text>
+        </TouchableOpacity>
+      </View>
+    </ImageBackground>
   );
 };
 
 const styles = StyleSheet.create({
-  container: {
+  background: {
     flex: 1,
     justifyContent: "center",
-    padding: 20,
-    backgroundColor: "#f4f4f5",
+    alignItems: "center",
+  },
+  container: {
+    width: "90%",
+    padding: 40,
+    backgroundColor: "rgba(0, 0, 0, 0.6)",
+    borderRadius: 8,
+    shadowColor: "#ffff",
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 1,
+    shadowRadius: 3.84,
+    elevation: 5,
   },
   title: {
     fontSize: 32,
     fontWeight: "bold",
-    color: "#333",
+    color: "#fff",
     textAlign: "center",
     marginBottom: 20,
   },
@@ -93,6 +112,14 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
     marginBottom: 15,
+    shadowColor: "#000",
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    elevation: 5,
   },
   buttonText: {
     fontSize: 18,
@@ -101,8 +128,9 @@ const styles = StyleSheet.create({
   },
   linkText: {
     fontSize: 16,
-    color: "#5a67d8",
+    color: "#fff",
     textAlign: "center",
+    fontWeight: "bold",
   },
 });
 

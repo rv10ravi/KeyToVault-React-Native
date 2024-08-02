@@ -9,7 +9,6 @@ import {
   TouchableOpacity,
   StyleSheet,
   Alert,
-  Button
 } from "react-native";
 import * as FileSystem from "expo-file-system";
 import * as Clipboard from "expo-clipboard";
@@ -61,14 +60,20 @@ const App = () => {
   const handleEncrypt = () => {
     const key = CryptoJS.lib.WordArray.random(32).toString();
     setEncryptionKey(key);
-    const encryptedDescription = CryptoJS.AES.encrypt(description, key).toString();
+    const encryptedDescription = CryptoJS.AES.encrypt(
+      description,
+      key
+    ).toString();
     setDescription(encryptedDescription);
     setShowEncryptionKey(true);
   };
 
   const handleSave = () => {
     if (!encryptionKey) {
-      Alert.alert("Encryption Error", "Please encrypt the description before saving.");
+      Alert.alert(
+        "Encryption Error",
+        "Please encrypt the description before saving."
+      );
       return;
     }
     const newItem = {
@@ -101,13 +106,19 @@ const App = () => {
   const handleDecrypt = () => {
     if (selectedItem) {
       try {
-        const bytes = CryptoJS.AES.decrypt(selectedItem.description, decryptionKey);
+        const bytes = CryptoJS.AES.decrypt(
+          selectedItem.description,
+          decryptionKey
+        );
         const decryptedDescription = bytes.toString(CryptoJS.enc.Utf8);
         Alert.alert("Decrypted Description", decryptedDescription, [
           {
             text: "Close",
             onPress: () => {
-              const reEncryptedDescription = CryptoJS.AES.encrypt(decryptedDescription, selectedItem.encryptionKey).toString();
+              const reEncryptedDescription = CryptoJS.AES.encrypt(
+                decryptedDescription,
+                selectedItem.encryptionKey
+              ).toString();
               const updatedItem = {
                 ...selectedItem,
                 description: reEncryptedDescription,
@@ -130,7 +141,10 @@ const App = () => {
 
   const handleCopyKey = () => {
     Clipboard.setString(encryptionKey);
-    Alert.alert("Copied to Clipboard", "The encryption key has been copied to the clipboard.");
+    Alert.alert(
+      "Copied to Clipboard",
+      "The encryption key has been copied to the clipboard."
+    );
   };
 
   return (
@@ -143,13 +157,13 @@ const App = () => {
             <View style={styles.cardActions}>
               <TouchableOpacity
                 onPress={() => handleView(item)}
-                style={styles.button}
+                style={styles.buttonView}
               >
                 <Text style={styles.buttonText}>View</Text>
               </TouchableOpacity>
               <TouchableOpacity
                 onPress={() => handleDelete(item.id)}
-                style={styles.button}
+                style={styles.buttonDelete}
               >
                 <Text style={styles.buttonText}>Delete</Text>
               </TouchableOpacity>
@@ -179,13 +193,27 @@ const App = () => {
           />
           {showEncryptionKey && (
             <View style={styles.encryptionKeyContainer}>
-              <Text style={styles.encryptionKeyText}>Encryption Key: {encryptionKey}</Text>
-              <Button title="Copy Key" onPress={handleCopyKey} />
+              <Text style={styles.encryptionKeyText}>
+                Encryption Key: {encryptionKey}
+              </Text>
+              <TouchableOpacity
+                style={styles.copyButton}
+                onPress={handleCopyKey}
+              >
+                <Text style={styles.copyButtonText}>Copy Key</Text>
+              </TouchableOpacity>
             </View>
           )}
           <View style={styles.modalActions}>
-            <Button title="Encrypt" onPress={handleEncrypt} />
-            <Button title="Save" onPress={handleSave} />
+            <TouchableOpacity
+              style={styles.encryptButton}
+              onPress={handleEncrypt}
+            >
+              <Text style={styles.modalButtonText}>Encrypt</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.saveButton} onPress={handleSave}>
+              <Text style={styles.modalButtonText}>Save</Text>
+            </TouchableOpacity>
           </View>
         </View>
       </Modal>
@@ -199,8 +227,12 @@ const App = () => {
             onChangeText={(text) => setDecryptionKey(text)}
             secureTextEntry
           />
-          <Button title="Decrypt" onPress={handleDecrypt} />
-          <Button title="Cancel" onPress={() => setShowDecryptModal(false)} />
+          <TouchableOpacity
+            style={styles.decryptButton}
+            onPress={handleDecrypt}
+          >
+            <Text style={styles.modalButtonText}>Decrypt</Text>
+          </TouchableOpacity>
         </View>
       </Modal>
     </View>
@@ -210,60 +242,67 @@ const App = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    padding: 10,
+    backgroundColor: "#f8f9fa",
+    paddingTop:50,
   },
   scrollView: {
-    paddingBottom: 20,
+    padding: 16,
   },
   card: {
+    padding: 16,
+    marginVertical: 8,
     backgroundColor: "#fff",
-    padding: 15,
-    marginBottom: 10,
-    borderRadius: 10,
+    borderRadius: 12,
+    borderColor: "#ddd",
+    borderWidth: 1,
     shadowColor: "#000",
     shadowOpacity: 0.1,
-    shadowRadius: 5,
-    shadowOffset: { width: 0, height: 2 },
-    elevation: 2,
+    shadowRadius: 10,
+    elevation: 5,
   },
   cardTitle: {
     fontSize: 18,
     fontWeight: "bold",
+    color: "#333",
+    marginBottom: 8,
   },
   cardText: {
-    marginTop: 10,
-    fontSize: 16,
+    fontSize: 14,
+    color: "#555",
+    marginBottom: 8,
   },
   cardActions: {
     flexDirection: "row",
     justifyContent: "space-between",
-    marginTop: 10,
   },
-  button: {
+  buttonView: {
+    padding: 8,
     backgroundColor: "#007bff",
-    paddingVertical: 10,
-    paddingHorizontal: 20,
+    borderRadius: 5,
+  },
+  buttonDelete: {
+    padding: 8,
+    backgroundColor: "#dc3545",
     borderRadius: 5,
   },
   buttonText: {
     color: "#fff",
-    fontSize: 16,
+    fontSize: 14,
   },
   floatingButton: {
     position: "absolute",
-    bottom: 20,
-    right: 20,
+    bottom: 16,
+    right: 16,
+    width: 56,
+    height: 56,
+    borderRadius: 28,
     backgroundColor: "#007bff",
-    width: 60,
-    height: 60,
-    borderRadius: 30,
     justifyContent: "center",
     alignItems: "center",
     shadowColor: "#000",
     shadowOpacity: 0.3,
     shadowRadius: 5,
-    shadowOffset: { width: 0, height: 2 },
-    elevation: 2,
+    elevation: 5,
   },
   floatingButtonText: {
     color: "#fff",
@@ -271,27 +310,63 @@ const styles = StyleSheet.create({
   },
   modalContainer: {
     flex: 1,
-    padding: 20,
     justifyContent: "center",
+    alignItems: "center",
+    padding: 16,
+    backgroundColor: "#fff",
   },
   input: {
+    width: "100%",
+    padding: 12,
+    marginVertical: 8,
+    borderRadius: 8,
+    borderColor: "#ddd",
     borderWidth: 1,
-    borderColor: "#ccc",
-    padding: 10,
-    marginBottom: 10,
-    borderRadius: 5,
-    fontSize: 16,
+    backgroundColor: "#f1f1f1",
   },
   modalActions: {
     flexDirection: "row",
     justifyContent: "space-around",
+    marginTop: 16,
+    width: "100%",
+  },
+  encryptButton: {
+    padding: 12,
+    backgroundColor: "#17a2b8",
+    borderRadius: 8,
+  },
+  saveButton: {
+    padding: 12,
+    backgroundColor: "#28a745",
+    borderRadius: 8,
+  },
+  modalButtonText: {
+    color: "#fff",
+    fontSize: 16,
   },
   encryptionKeyContainer: {
-    marginBottom: 10,
+    marginTop: 16,
+    alignItems: "center",
   },
   encryptionKeyText: {
     fontSize: 16,
-    marginBottom: 5,
+    marginBottom: 8,
+    color: "#333",
+  },
+  copyButton: {
+    padding: 8,
+    backgroundColor: "#ffc107",
+    borderRadius: 5,
+  },
+  copyButtonText: {
+    color: "#fff",
+    fontSize: 14,
+  },
+  decryptButton: {
+    padding: 12,
+    backgroundColor: "#6c757d",
+    borderRadius: 8,
+    marginTop: 16,
   },
 });
 

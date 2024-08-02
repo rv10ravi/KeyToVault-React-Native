@@ -6,7 +6,7 @@ import {
   Text,
   FlatList,
   TouchableOpacity,
-  Settings,
+  Animated,
 } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import { StackNavigationProp } from "@react-navigation/stack";
@@ -55,31 +55,65 @@ const data = [
 export default function HomeScreen() {
   const navigation = useNavigation<HomeScreenNavigationProp>();
 
+  const handlePressIn = (animationValue: Animated.Value) => {
+    Animated.spring(animationValue, {
+      toValue: 0.95,
+      useNativeDriver: true,
+    }).start();
+  };
+
+  const handlePressOut = (animationValue: Animated.Value) => {
+    Animated.spring(animationValue, {
+      toValue: 1,
+      friction: 3,
+      tension: 40,
+      useNativeDriver: true,
+    }).start();
+  };
+
   return (
     <View style={styles.container}>
-      <Text style={styles.headerText}>Browse</Text>
+      <Text style={styles.headerText}>Welcome To KeyToVault</Text>
       <FlatList
         data={data}
-        renderItem={({ item }) => (
-          <TouchableOpacity
-            style={styles.itemContainer}
-            onPress={() =>
-              navigation.navigate(item.key as keyof RootStackParamList)
-            }
-          >
-            <View
-              style={[styles.iconContainer, { backgroundColor: item.color }]}
+        renderItem={({ item }) => {
+          const scaleValue = new Animated.Value(1);
+
+          return (
+            <Animated.View
+              style={[
+                styles.animatedContainer,
+                { transform: [{ scale: scaleValue }] },
+              ]}
             >
-              <Image source={item.icon} style={styles.icon} />
-            </View>
-            <Text style={styles.itemText}>{item.key}</Text>
-          </TouchableOpacity>
-        )}
+              <TouchableOpacity
+                style={styles.itemContainer}
+                onPress={() =>
+                  navigation.navigate(item.key as keyof RootStackParamList)
+                }
+                activeOpacity={0.7}
+                onPressIn={() => handlePressIn(scaleValue)}
+                onPressOut={() => handlePressOut(scaleValue)}
+              >
+                <View
+                  style={[
+                    styles.iconContainer,
+                    { backgroundColor: item.color },
+                  ]}
+                >
+                  <Image source={item.icon} style={styles.icon} />
+                </View>
+                <Text style={styles.itemText}>{item.key}</Text>
+              </TouchableOpacity>
+            </Animated.View>
+          );
+        }}
         keyExtractor={(item) => item.key}
       />
       <TouchableOpacity
         style={styles.floatingButton}
         onPress={() => navigation.navigate("Settings")}
+        activeOpacity={0.7}
       >
         <Ionicons name="settings-outline" size={24} color="white" />
       </TouchableOpacity>
@@ -92,24 +126,38 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: "#F4F4F5",
     padding: 20,
-    paddingTop: 40,
+    paddingTop: 50,
   },
   headerText: {
     fontSize: 24,
     fontWeight: "bold",
     marginBottom: 20,
+    color: "#333",
+    textAlign: "center",
+  },
+  animatedContainer: {
+    marginBottom: 10,
   },
   itemContainer: {
     flexDirection: "row",
     alignItems: "center",
-    paddingVertical: 10,
-    borderBottomWidth: 1,
-    borderBottomColor: "#E5E7EB",
+    paddingVertical: 15,
+    paddingHorizontal: 20,
+    backgroundColor: "#fff",
+    borderRadius: 8,
+    shadowColor: "#000",
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 3.84,
+    elevation: 5,
   },
   iconContainer: {
-    width: 40,
-    height: 40,
-    borderRadius: 8,
+    width: 50,
+    height: 50,
+    borderRadius: 25,
     justifyContent: "center",
     alignItems: "center",
     marginRight: 15,
@@ -121,6 +169,7 @@ const styles = StyleSheet.create({
   itemText: {
     fontSize: 18,
     color: "#1F2937",
+    fontWeight: "bold",
   },
   floatingButton: {
     position: "absolute",
@@ -133,5 +182,12 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
     elevation: 5,
+    shadowColor: "#000",
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
   },
 });
