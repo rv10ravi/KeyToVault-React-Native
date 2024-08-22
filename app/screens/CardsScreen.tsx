@@ -7,9 +7,9 @@ import {
   TouchableHighlight,
   Modal,
   TextInput,
-  Button,
   StyleSheet,
   Alert,
+  ImageBackground,
 } from "react-native";
 import * as FileSystem from "expo-file-system";
 import CryptoJS from "crypto-js";
@@ -60,6 +60,14 @@ const CardsScreen = () => {
   };
 
   const handleEncrypt = () => {
+    if (!cardNumber || !expiryDate || !cvv) {
+      Alert.alert(
+        "Input Error",
+        "Please fill in all card details before encrypting."
+      );
+      return;
+    }
+
     const key = CryptoJS.lib.WordArray.random(32).toString();
     setEncryptionKey(key);
     const encryptedCardNumber = CryptoJS.AES.encrypt(
@@ -106,7 +114,6 @@ const CardsScreen = () => {
         setDecryptedCardNumber(decryptedCardNumber);
         setDecryptedExpiryDate(decryptedExpiryDate);
         setDecryptedCvv(decryptedCvv);
-        setShowDecryptionModal(true);
       } else {
         Alert.alert("Decryption Error", "Invalid decryption key.");
       }
@@ -132,7 +139,6 @@ const CardsScreen = () => {
       cardNumber,
       expiryDate,
       cvv,
-      encryptionKey,
     };
 
     const updatedCards = [...cards, newCard];
@@ -150,9 +156,22 @@ const CardsScreen = () => {
   };
 
   const handleDelete = (id) => {
-    const updatedCards = cards.filter((card) => card.id !== id);
-    setCards(updatedCards);
-    saveData(updatedCards);
+    Alert.alert(
+      "Delete Confirmation",
+      "Are you sure you want to delete this card?",
+      [
+        { text: "Cancel", style: "cancel" },
+        {
+          text: "Delete",
+          style: "destructive",
+          onPress: () => {
+            const updatedCards = cards.filter((card) => card.id !== id);
+            setCards(updatedCards);
+            saveData(updatedCards);
+          },
+        },
+      ]
+    );
   };
 
   const handleAdd = () => {
@@ -165,34 +184,6 @@ const CardsScreen = () => {
   };
 
   const handleCloseDecryptionModal = () => {
-    if (decryptionKey === selectedCard.encryptionKey) {
-      const encryptedCardNumber = CryptoJS.AES.encrypt(
-        decryptedCardNumber,
-        decryptionKey
-      ).toString();
-      const encryptedExpiryDate = CryptoJS.AES.encrypt(
-        decryptedExpiryDate,
-        decryptionKey
-      ).toString();
-      const encryptedCvv = CryptoJS.AES.encrypt(
-        decryptedCvv,
-        decryptionKey
-      ).toString();
-
-      const updatedCards = cards.map((card) =>
-        card.id === selectedCard.id
-          ? {
-              ...card,
-              cardNumber: encryptedCardNumber,
-              expiryDate: encryptedExpiryDate,
-              cvv: encryptedCvv,
-            }
-          : card
-      );
-
-      setCards(updatedCards);
-      saveData(updatedCards);
-    }
     setShowDecryptionModal(false);
     setDecryptionKey("");
     setDecryptedCardNumber("");
@@ -206,213 +197,357 @@ const CardsScreen = () => {
   };
 
   return (
-    <View style={styles.container}>
-      <ScrollView contentContainerStyle={styles.scrollView}>
-        {cards.map((card) => (
-          <View key={card.id} style={styles.card}>
-            <Text style={styles.cardTitle}>{card.name}</Text>
-            <Text style={styles.cardText}>Bank: {card.bankName}</Text>
-            <Text style={styles.cardText}>Type: {card.cardType}</Text>
-            <Text style={styles.cardText}>Number: {card.cardNumber}</Text>
-            <Text style={styles.cardText}>Expiry: {card.expiryDate}</Text>
-            <Text style={styles.cardText}>CVV: {card.cvv}</Text>
-            <View style={styles.cardActions}>
-              <TouchableOpacity
-                onPress={() => handleView(card)}
-                style={styles.viewButton}
-              >
-                <Text style={styles.buttonText}>View</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                onPress={() => handleDelete(card.id)}
-                style={styles.deleteButton}
-              >
-                <Text style={styles.buttonText}>Delete</Text>
-              </TouchableOpacity>
+    <ImageBackground
+      source={require("../../assets/images/img2.jpg")}
+      style={styles.backgroundImage}
+    >
+      <View style={styles.container}>
+        <ScrollView contentContainerStyle={styles.scrollView}>
+          {cards.map((card) => (
+            <View key={card.id} style={styles.card}>
+              <Text style={styles.cardTitle}>{card.name}</Text>
+              <Text style={styles.cardText}>Bank: {card.bankName}</Text>
+              <Text style={styles.cardText}>Type: {card.cardType}</Text>
+              <View style={styles.cardActions}>
+                <TouchableOpacity
+                  onPress={() => handleView(card)}
+                  style={styles.viewButton}
+                >
+                  <Text style={styles.buttonText}>View</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  onPress={() => handleDelete(card.id)}
+                  style={styles.deleteButton}
+                >
+                  <Text style={styles.buttonText}>Delete</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          ))}
+        </ScrollView>
+
+        <TouchableOpacity style={styles.floatingButton} onPress={handleAdd}>
+          <Text style={styles.floatingButtonText}>+</Text>
+        </TouchableOpacity>
+
+        {/* Add Card Modal */}
+        <Modal visible={showModal} animationType="slide" transparent>
+          <View style={styles.modalOverlay}>
+            <View style={styles.modalContainer}>
+              <ScrollView showsVerticalScrollIndicator={false}>
+                <Text style={styles.modalTitle}>Add New Card</Text>
+                <TextInput
+                  style={styles.input}
+                  placeholder="Name"
+                  placeholderTextColor="#ccc"
+                  value={name}
+                  onChangeText={(text) => setName(text)}
+                />
+                <TextInput
+                  style={styles.input}
+                  placeholder="Bank Name"
+                  placeholderTextColor="#ccc"
+                  value={bankName}
+                  onChangeText={(text) => setBankName(text)}
+                />
+                <TextInput
+                  style={styles.input}
+                  placeholder="Card Type (Credit/Debit)"
+                  placeholderTextColor="#ccc"
+                  value={cardType}
+                  onChangeText={(text) => setCardType(text)}
+                />
+                <TextInput
+                  style={styles.input}
+                  placeholder="Card Number"
+                  placeholderTextColor="#ccc"
+                  value={cardNumber}
+                  onChangeText={(text) => setCardNumber(text)}
+                  keyboardType="numeric"
+                  maxLength={16}
+                />
+                <TextInput
+                  style={styles.input}
+                  placeholder="Expiry Date (MM/YY)"
+                  placeholderTextColor="#ccc"
+                  value={expiryDate}
+                  onChangeText={(text) => setExpiryDate(text)}
+                  keyboardType="numeric"
+                  maxLength={5}
+                />
+                <TextInput
+                  style={styles.input}
+                  placeholder="CVV"
+                  placeholderTextColor="#ccc"
+                  value={cvv}
+                  onChangeText={(text) => setCvv(text)}
+                  keyboardType="numeric"
+                  secureTextEntry
+                  maxLength={3}
+                />
+
+                <TouchableOpacity
+                  onPress={handleEncrypt}
+                  style={styles.modalButton}
+                >
+                  <Text style={styles.modalButtonText}>Encrypt</Text>
+                </TouchableOpacity>
+
+                {showEncryptionKey && (
+                  <View style={styles.keyContainer}>
+                    <Text style={styles.keyText}>Encryption Key:</Text>
+                    <Text style={styles.keyValue}>{encryptionKey}</Text>
+                    <TouchableOpacity
+                      onPress={handleCopyKey}
+                      style={styles.copyButton}
+                    >
+                      <Text style={styles.copyButtonText}>Copy Key</Text>
+                    </TouchableOpacity>
+                  </View>
+                )}
+
+                <TouchableOpacity
+                  onPress={handleSave}
+                  style={styles.saveButton}
+                >
+                  <Text style={styles.saveButtonText}>Save</Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  onPress={() => setShowModal(false)}
+                  style={styles.cancelButton}
+                >
+                  <Text style={styles.cancelButtonText}>Cancel</Text>
+                </TouchableOpacity>
+              </ScrollView>
             </View>
           </View>
-        ))}
-      </ScrollView>
+        </Modal>
 
-      <TouchableHighlight style={styles.floatingButton} onPress={handleAdd}>
-        <Text style={styles.floatingButtonText}>+</Text>
-      </TouchableHighlight>
+        {/* Decrypt Card Modal */}
+        <Modal visible={showDecryptionModal} animationType="slide" transparent>
+          <View style={styles.modalOverlay}>
+            <View style={styles.modalContainer}>
+              <ScrollView showsVerticalScrollIndicator={false}>
+                <Text style={styles.modalTitle}>Decrypt Card</Text>
+                <TextInput
+                  style={styles.input}
+                  placeholder="Enter Decryption Key"
+                  placeholderTextColor="#ccc"
+                  value={decryptionKey}
+                  onChangeText={(text) => setDecryptionKey(text)}
+                  secureTextEntry
+                />
+                <TouchableOpacity
+                  onPress={handleDecrypt}
+                  style={styles.modalButton}
+                >
+                  <Text style={styles.modalButtonText}>Decrypt</Text>
+                </TouchableOpacity>
 
-      <Modal visible={showModal} animationType="slide">
-        <View style={styles.modalContainer}>
-          <TextInput
-            style={styles.input}
-            placeholder="Name"
-            value={name}
-            onChangeText={(text) => setName(text)}
-          />
-          <TextInput
-            style={styles.input}
-            placeholder="Bank Name"
-            value={bankName}
-            onChangeText={(text) => setBankName(text)}
-          />
-          <TextInput
-            style={styles.input}
-            placeholder="Card Type (Credit/Debit)"
-            value={cardType}
-            onChangeText={(text) => setCardType(text)}
-          />
-          <TextInput
-            style={styles.input}
-            placeholder="Card Number"
-            value={cardNumber}
-            onChangeText={(text) => setCardNumber(text)}
-            keyboardType="numeric"
-          />
-          <TextInput
-            style={styles.input}
-            placeholder="Expiry Date (MM/YY)"
-            value={expiryDate}
-            onChangeText={(text) => setExpiryDate(text)}
-            keyboardType="numeric"
-          />
-          <TextInput
-            style={styles.input}
-            placeholder="CVV"
-            value={cvv}
-            onChangeText={(text) => setCvv(text)}
-            keyboardType="numeric"
-            secureTextEntry
-          />
-          {showEncryptionKey && (
-            <View style={styles.encryptionKeyContainer}>
-              <Text style={styles.encryptionKeyText}>
-                Encryption Key: {encryptionKey}
-              </Text>
-              <Button title="Copy Key" onPress={handleCopyKey} />
+                {decryptedCardNumber !== "" && (
+                  <View style={styles.decryptedContainer}>
+                    <Text style={styles.decryptedText}>
+                      Card Number: {decryptedCardNumber}
+                    </Text>
+                    <Text style={styles.decryptedText}>
+                      Expiry Date: {decryptedExpiryDate}
+                    </Text>
+                    <Text style={styles.decryptedText}>
+                      CVV: {decryptedCvv}
+                    </Text>
+                  </View>
+                )}
+
+                <TouchableOpacity
+                  onPress={handleCloseDecryptionModal}
+                  style={styles.cancelButton}
+                >
+                  <Text style={styles.cancelButtonText}>Close</Text>
+                </TouchableOpacity>
+              </ScrollView>
             </View>
-          )}
-          <View style={styles.modalActions}>
-            <Button title="Encrypt" onPress={handleEncrypt} />
-            <Button title="Save" onPress={handleSave} />
-            <Button title="Cancel" onPress={() => setShowModal(false)} />
           </View>
-        </View>
-      </Modal>
-
-      <Modal visible={showDecryptionModal} animationType="slide">
-        <View style={styles.modalContainer}>
-          <TextInput
-            style={styles.input}
-            placeholder="Enter Decryption Key"
-            value={decryptionKey}
-            onChangeText={(text) => setDecryptionKey(text)}
-          />
-          <Button title="Decrypt" onPress={handleDecrypt} />
-          {decryptedCardNumber && (
-            <View>
-              <Text style={styles.cardText}>
-                Card Number: {decryptedCardNumber}
-              </Text>
-              <Text style={styles.cardText}>
-                Expiry Date: {decryptedExpiryDate}
-              </Text>
-              <Text style={styles.cardText}>CVV: {decryptedCvv}</Text>
-            </View>
-          )}
-          <View style={styles.modalActions}>
-            <Button title="Close" onPress={handleCloseDecryptionModal} />
-          </View>
-        </View>
-      </Modal>
-    </View>
+        </Modal>
+      </View>
+    </ImageBackground>
   );
 };
 
 const styles = StyleSheet.create({
+  backgroundImage: {
+    flex: 1,
+    resizeMode: "cover",
+  },
   container: {
     flex: 1,
-    backgroundColor: "#f0f0f0",
     padding: 20,
-    marginTop: 50,
+    paddingTop: 60,
+    backgroundColor: "rgba(0, 0, 0, 0.6)",
   },
   scrollView: {
-    paddingBottom: 80,
+    paddingBottom: 100,
   },
   card: {
-    backgroundColor: "#fff",
-    borderRadius: 8,
-    padding: 16,
-    marginBottom: 16,
-    elevation: 3,
+    backgroundColor: "rgba(255, 255, 255, 0.1)",
+    borderRadius: 10,
+    padding: 20,
+    marginBottom: 15,
   },
   cardTitle: {
-    fontSize: 18,
+    fontSize: 20,
     fontWeight: "bold",
-    marginBottom: 8,
+    color: "#fff",
+    marginBottom: 10,
   },
   cardText: {
-    fontSize: 14,
-    marginBottom: 4,
+    fontSize: 16,
+    color: "#ccc",
+    marginBottom: 5,
   },
   cardActions: {
     flexDirection: "row",
     justifyContent: "space-between",
-    marginTop: 8,
+    marginTop: 15,
   },
   viewButton: {
-    backgroundColor: "#4caf50",
-    padding: 8,
-    borderRadius: 4,
+    backgroundColor: "#1E90FF",
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    borderRadius: 5,
   },
   deleteButton: {
-    backgroundColor: "#f44336",
-    padding: 8,
-    borderRadius: 4,
+    backgroundColor: "#FF4500",
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    borderRadius: 5,
   },
   buttonText: {
     color: "#fff",
+    fontSize: 16,
     fontWeight: "bold",
   },
   floatingButton: {
-    position: "absolute",
-    bottom: 20,
-    right: 20,
-    backgroundColor: "#007bff",
-    borderRadius: 50,
+    backgroundColor: "#00FF00",
     width: 60,
     height: 60,
-    alignItems: "center",
+    borderRadius: 30,
     justifyContent: "center",
-    elevation: 5,
+    alignItems: "center",
+    position: "absolute",
+    bottom: 30,
+    right: 30,
+    elevation: 8,
   },
   floatingButtonText: {
+    fontSize: 36,
     color: "#fff",
-    fontSize: 24,
     fontWeight: "bold",
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0, 0, 0, 0.8)",
+    justifyContent: "center",
+    alignItems: "center",
   },
   modalContainer: {
-    flex: 1,
+    width: "90%",
+    backgroundColor: "#333",
+    borderRadius: 10,
     padding: 20,
-    backgroundColor: "#fff",
+    maxHeight: "80%",
+  },
+  modalTitle: {
+    fontSize: 24,
+    color: "#fff",
+    fontWeight: "bold",
+    marginBottom: 20,
+    textAlign: "center",
   },
   input: {
-    borderWidth: 1,
-    borderColor: "#ccc",
-    padding: 10,
+    backgroundColor: "rgba(255, 255, 255, 0.1)",
+    color: "#fff",
+    padding: 15,
+    borderRadius: 5,
+    marginBottom: 15,
+    fontSize: 16,
+  },
+  modalButton: {
+    backgroundColor: "#1E90FF",
+    paddingVertical: 15,
+    borderRadius: 5,
+    alignItems: "center",
     marginBottom: 10,
-    borderRadius: 8,
   },
-  modalActions: {
-    flexDirection: "row",
-    justifyContent: "space-between",
+  modalButtonText: {
+    color: "#fff",
+    fontSize: 18,
+    fontWeight: "bold",
   },
-  encryptionKeyContainer: {
-    marginTop: 10,
-    padding: 10,
-    borderRadius: 8,
-    backgroundColor: "#e0e0e0",
+  saveButton: {
+    backgroundColor: "#32CD32",
+    paddingVertical: 15,
+    borderRadius: 5,
+    alignItems: "center",
+    marginBottom: 10,
   },
-  encryptionKeyText: {
+  saveButtonText: {
+    color: "#fff",
+    fontSize: 18,
+    fontWeight: "bold",
+  },
+  cancelButton: {
+    backgroundColor: "#FF4500",
+    paddingVertical: 15,
+    borderRadius: 5,
+    alignItems: "center",
+    marginBottom: 10,
+  },
+  cancelButtonText: {
+    color: "#fff",
+    fontSize: 18,
+    fontWeight: "bold",
+  },
+  keyContainer: {
+    backgroundColor: "rgba(255, 255, 255, 0.1)",
+    padding: 15,
+    borderRadius: 5,
+    marginBottom: 15,
+    alignItems: "center",
+  },
+  keyText: {
+    color: "#fff",
+    fontSize: 16,
+    marginBottom: 10,
+    fontWeight: "bold",
+  },
+  keyValue: {
+    color: "#fff",
+    fontSize: 14,
+    textAlign: "center",
+    marginBottom: 10,
+  },
+  copyButton: {
+    backgroundColor: "#FFD700",
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    borderRadius: 5,
+  },
+  copyButtonText: {
+    color: "#333",
     fontSize: 16,
     fontWeight: "bold",
-    marginBottom: 5,
+  },
+  decryptedContainer: {
+    backgroundColor: "rgba(255, 255, 255, 0.1)",
+    padding: 15,
+    borderRadius: 5,
+    marginTop: 20,
+  },
+  decryptedText: {
+    color: "#fff",
+    fontSize: 16,
+    marginBottom: 10,
   },
 });
 

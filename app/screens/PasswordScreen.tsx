@@ -6,10 +6,10 @@ import {
   ScrollView,
   Modal,
   TextInput,
-  Button,
   StyleSheet,
   TouchableOpacity,
   Alert,
+  ImageBackground,
 } from "react-native";
 import * as FileSystem from "expo-file-system";
 import * as Clipboard from "expo-clipboard";
@@ -17,7 +17,7 @@ import CryptoJS from "crypto-js";
 
 const fileUri = FileSystem.documentDirectory + "passwords.json";
 
-const App = () => {
+const PasswordsScreen = () => {
   const [data, setData] = useState([]);
   const [showModal, setShowModal] = useState(false);
   const [socialMediaName, setSocialMediaName] = useState("");
@@ -54,9 +54,22 @@ const App = () => {
   };
 
   const handleDelete = (id) => {
-    const updatedData = data.filter((item) => item.id !== id);
-    setData(updatedData);
-    saveData(updatedData);
+    Alert.alert(
+      "Delete Confirmation",
+      "Are you sure you want to delete this password?",
+      [
+        { text: "Cancel", style: "cancel" },
+        {
+          text: "Delete",
+          style: "destructive",
+          onPress: () => {
+            const updatedData = data.filter((item) => item.id !== id);
+            setData(updatedData);
+            saveData(updatedData);
+          },
+        },
+      ]
+    );
   };
 
   const handleView = (item) => {
@@ -69,6 +82,11 @@ const App = () => {
   };
 
   const handleEncrypt = () => {
+    if (!password) {
+      Alert.alert("Input Error", "Please enter a password before encrypting.");
+      return;
+    }
+
     const key = CryptoJS.lib.WordArray.random(32).toString();
     setEncryptionKey(key);
     const encryptedPassword = CryptoJS.AES.encrypt(password, key).toString();
@@ -84,6 +102,7 @@ const App = () => {
       );
       return;
     }
+
     const newItem = {
       id: Date.now(),
       socialMediaName,
@@ -91,6 +110,7 @@ const App = () => {
       password,
       encryptionKey,
     };
+
     const updatedData = [...data, newItem];
     setData(updatedData);
     saveData(updatedData);
@@ -133,246 +153,291 @@ const App = () => {
           },
         ]);
       } catch (error) {
-        Alert.alert("Decryption Error", "Invalid encryption key.");
+        Alert.alert("Decryption Error", "Invalid decryption key.");
       }
     }
   };
 
   const handleCopyKey = () => {
     Clipboard.setString(encryptionKey);
-    Alert.alert(
-      "Copied to Clipboard",
-      "The encryption key has been copied to the clipboard."
-    );
+    Alert.alert("Key Copied", "Encryption key has been copied to clipboard.");
   };
 
   return (
-    <View style={styles.container}>
-      <ScrollView contentContainerStyle={styles.scrollView}>
-        {data.map((item) => (
-          <View key={item.id} style={styles.card}>
-            <Text style={styles.cardTitle}>{item.socialMediaName}</Text>
-            <Text style={styles.cardText}>ID: {item.email}</Text>
-            <View style={styles.cardActions}>
-              <TouchableOpacity
-                onPress={() => handleView(item)}
-                style={styles.buttonView}
-              >
-                <Text style={styles.buttonText}>View</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                onPress={() => handleDelete(item.id)}
-                style={styles.buttonDelete}
-              >
-                <Text style={styles.buttonText}>Delete</Text>
-              </TouchableOpacity>
+    <ImageBackground
+      source={require("../../assets/images/img2.jpg")}
+      style={styles.backgroundImage}
+    >
+      <View style={styles.container}>
+        <ScrollView contentContainerStyle={styles.scrollView}>
+          {data.map((item) => (
+            <View key={item.id} style={styles.card}>
+              <Text style={styles.cardTitle}>{item.socialMediaName}</Text>
+              <Text style={styles.cardText}>Email: {item.email}</Text>
+              <View style={styles.cardActions}>
+                <TouchableOpacity
+                  onPress={() => handleView(item)}
+                  style={styles.viewButton}
+                >
+                  <Text style={styles.buttonText}>View</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  onPress={() => handleDelete(item.id)}
+                  style={styles.deleteButton}
+                >
+                  <Text style={styles.buttonText}>Delete</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          ))}
+        </ScrollView>
+
+        <TouchableOpacity style={styles.floatingButton} onPress={handleAdd}>
+          <Text style={styles.floatingButtonText}>+</Text>
+        </TouchableOpacity>
+
+        {/* Add Password Modal */}
+        <Modal visible={showModal} animationType="slide" transparent>
+          <View style={styles.modalOverlay}>
+            <View style={styles.modalContainer}>
+              <ScrollView showsVerticalScrollIndicator={false}>
+                <Text style={styles.modalTitle}>Add New Password</Text>
+                <TextInput
+                  style={styles.input}
+                  placeholder="Social Media Name"
+                  placeholderTextColor="#ccc"
+                  value={socialMediaName}
+                  onChangeText={(text) => setSocialMediaName(text)}
+                />
+                <TextInput
+                  style={styles.input}
+                  placeholder="Email"
+                  placeholderTextColor="#ccc"
+                  value={email}
+                  onChangeText={(text) => setEmail(text)}
+                />
+                <TextInput
+                  style={styles.input}
+                  placeholder="Password"
+                  placeholderTextColor="#ccc"
+                  value={password}
+                  onChangeText={(text) => setPassword(text)}
+                  secureTextEntry
+                />
+
+                <TouchableOpacity
+                  onPress={handleEncrypt}
+                  style={styles.modalButton}
+                >
+                  <Text style={styles.modalButtonText}>Encrypt</Text>
+                </TouchableOpacity>
+
+                {showEncryptionKey && (
+                  <View style={styles.keyContainer}>
+                    <Text style={styles.keyText}>Encryption Key:</Text>
+                    <Text style={styles.keyValue}>{encryptionKey}</Text>
+                    <TouchableOpacity
+                      onPress={handleCopyKey}
+                      style={styles.copyButton}
+                    >
+                      <Text style={styles.copyButtonText}>Copy Key</Text>
+                    </TouchableOpacity>
+                  </View>
+                )}
+
+                <TouchableOpacity
+                  onPress={handleSave}
+                  style={styles.saveButton}
+                >
+                  <Text style={styles.saveButtonText}>Save</Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  onPress={() => setShowModal(false)}
+                  style={styles.cancelButton}
+                >
+                  <Text style={styles.cancelButtonText}>Cancel</Text>
+                </TouchableOpacity>
+              </ScrollView>
             </View>
           </View>
-        ))}
-      </ScrollView>
+        </Modal>
 
-      <TouchableOpacity style={styles.floatingButton} onPress={handleAdd}>
-        <Text style={styles.floatingButtonText}>+</Text>
-      </TouchableOpacity>
-
-      <Modal visible={showModal} animationType="slide">
-        <View style={styles.modalContainer}>
-          <TextInput
-            style={styles.input}
-            placeholder="Social Media Name"
-            value={socialMediaName}
-            onChangeText={(text) => setSocialMediaName(text)}
-          />
-          <TextInput
-            style={styles.input}
-            placeholder="Email"
-            value={email}
-            onChangeText={(text) => setEmail(text)}
-          />
-          <TextInput
-            style={styles.input}
-            placeholder="Password"
-            value={password}
-            onChangeText={(text) => setPassword(text)}
-            secureTextEntry
-          />
-          {showEncryptionKey && (
-            <View style={styles.encryptionKeyContainer}>
-              <Text style={styles.encryptionKeyText}>
-                Encryption Key: {encryptionKey}
-              </Text>
-              <TouchableOpacity
-                style={styles.copyButton}
-                onPress={handleCopyKey}
-              >
-                <Text style={styles.copyButtonText}>Copy Key</Text>
-              </TouchableOpacity>
+        {/* Decrypt Password Modal */}
+        <Modal visible={showDecryptModal} animationType="slide" transparent>
+          <View style={styles.modalOverlay}>
+            <View style={styles.modalContainer}>
+              <ScrollView showsVerticalScrollIndicator={false}>
+                <Text style={styles.modalTitle}>Decrypt Password</Text>
+                <TextInput
+                  style={styles.input}
+                  placeholder="Enter Decryption Key"
+                  placeholderTextColor="#ccc"
+                  value={decryptionKey}
+                  onChangeText={(text) => setDecryptionKey(text)}
+                  secureTextEntry
+                />
+                <TouchableOpacity
+                  onPress={handleDecrypt}
+                  style={styles.modalButton}
+                >
+                  <Text style={styles.modalButtonText}>Decrypt</Text>
+                </TouchableOpacity>
+              </ScrollView>
             </View>
-          )}
-          <View style={styles.modalActions}>
-            <TouchableOpacity
-              style={styles.encryptButton}
-              onPress={handleEncrypt}
-            >
-              <Text style={styles.modalButtonText}>Encrypt</Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.saveButton} onPress={handleSave}>
-              <Text style={styles.modalButtonText}>Save</Text>
-            </TouchableOpacity>
           </View>
-        </View>
-      </Modal>
-
-      <Modal visible={showDecryptModal} animationType="slide">
-        <View style={styles.modalContainer}>
-          <TextInput
-            style={styles.input}
-            placeholder="Enter Encryption Key"
-            value={decryptionKey}
-            onChangeText={(text) => setDecryptionKey(text)}
-            secureTextEntry
-          />
-          <TouchableOpacity
-            style={styles.decryptButton}
-            onPress={handleDecrypt}
-          >
-            <Text style={styles.modalButtonText}>Decrypt</Text>
-          </TouchableOpacity>
-        </View>
-      </Modal>
-    </View>
+        </Modal>
+      </View>
+    </ImageBackground>
   );
 };
 
 const styles = StyleSheet.create({
+  backgroundImage: {
+    flex: 1,
+    resizeMode: "cover",
+  },
   container: {
     flex: 1,
-    backgroundColor: "#f8f9fa",
-    paddingTop: 50,
+    padding: 20,
+    paddingTop: 60,
+    backgroundColor: "rgba(0, 0, 0, 0.6)",
   },
   scrollView: {
-    padding: 16,
+    paddingBottom: 100,
   },
   card: {
-    padding: 16,
-    marginVertical: 8,
-    backgroundColor: "#fff",
-    borderRadius: 12,
-    borderColor: "#ddd",
+    backgroundColor: "rgba(255, 255, 255, 0.8)",
+    padding: 15,
+    marginBottom: 10,
+    borderRadius: 10,
     borderWidth: 1,
-    shadowColor: "#000",
-    shadowOpacity: 0.1,
-    shadowRadius: 10,
-    elevation: 5,
+    borderColor: "#ddd",
   },
   cardTitle: {
     fontSize: 18,
     fontWeight: "bold",
-    color: "#333",
-    marginBottom: 8,
+    marginBottom: 5,
   },
   cardText: {
-    fontSize: 14,
-    color: "#555",
-    marginBottom: 8,
+    fontSize: 16,
+    marginBottom: 10,
   },
   cardActions: {
     flexDirection: "row",
     justifyContent: "space-between",
   },
-  buttonView: {
-    padding: 8,
-    backgroundColor: "#007bff",
+  viewButton: {
+    backgroundColor: "#007BFF",
+    padding: 10,
     borderRadius: 5,
   },
-  buttonDelete: {
-    padding: 8,
+  deleteButton: {
     backgroundColor: "#dc3545",
+    padding: 10,
     borderRadius: 5,
   },
   buttonText: {
     color: "#fff",
-    fontSize: 14,
+    fontWeight: "bold",
   },
   floatingButton: {
     position: "absolute",
-    bottom: 16,
-    right: 16,
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    backgroundColor: "#007bff",
-    justifyContent: "center",
+    bottom: 20,
+    right: 20,
+    backgroundColor: "#28a745",
+    width: 60,
+    height: 60,
+    borderRadius: 30,
     alignItems: "center",
-    shadowColor: "#000",
-    shadowOpacity: 0.3,
-    shadowRadius: 5,
-    elevation: 5,
+    justifyContent: "center",
   },
   floatingButtonText: {
+    fontSize: 30,
     color: "#fff",
-    fontSize: 24,
   },
-  modalContainer: {
+  modalOverlay: {
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
-    padding: 16,
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
+  },
+  modalContainer: {
+    width: "90%",
     backgroundColor: "#fff",
+    borderRadius: 10,
+    padding: 20,
+  },
+  modalTitle: {
+    fontSize: 22,
+    fontWeight: "bold",
+    marginBottom: 20,
   },
   input: {
-    width: "100%",
-    padding: 12,
-    marginVertical: 8,
-    borderRadius: 8,
+    height: 40,
     borderColor: "#ddd",
     borderWidth: 1,
-    backgroundColor: "#f1f1f1",
+    borderRadius: 5,
+    marginBottom: 15,
+    paddingHorizontal: 10,
+    backgroundColor: "#f8f9fa",
   },
-  modalActions: {
-    flexDirection: "row",
-    justifyContent: "space-around",
-    marginTop: 16,
-    width: "100%",
-  },
-  encryptButton: {
-    padding: 12,
-    backgroundColor: "#17a2b8",
-    borderRadius: 8,
-  },
-  saveButton: {
-    padding: 12,
-    backgroundColor: "#28a745",
-    borderRadius: 8,
+  modalButton: {
+    backgroundColor: "#007BFF",
+    padding: 15,
+    borderRadius: 5,
+    marginBottom: 10,
   },
   modalButtonText: {
     color: "#fff",
-    fontSize: 16,
+    fontWeight: "bold",
+    textAlign: "center",
   },
-  encryptionKeyContainer: {
-    marginTop: 16,
-    alignItems: "center",
+  keyContainer: {
+    marginTop: 15,
+    padding: 10,
+    backgroundColor: "#f8f9fa",
+    borderRadius: 5,
   },
-  encryptionKeyText: {
+  keyText: {
     fontSize: 16,
-    marginBottom: 8,
-    color: "#333",
+    fontWeight: "bold",
+  },
+  keyValue: {
+    fontSize: 14,
+    marginVertical: 10,
   },
   copyButton: {
-    padding: 8,
-    backgroundColor: "#ffc107",
+    backgroundColor: "#17a2b8",
+    padding: 10,
     borderRadius: 5,
   },
   copyButtonText: {
     color: "#fff",
-    fontSize: 14,
+    fontWeight: "bold",
+    textAlign: "center",
   },
-  decryptButton: {
-    padding: 12,
-    backgroundColor: "#6c757d",
-    borderRadius: 8,
-    marginTop: 16,
+  saveButton: {
+    backgroundColor: "#28a745",
+    padding: 15,
+    borderRadius: 5,
+    marginBottom: 10,
+  },
+  saveButtonText: {
+    color: "#fff",
+    fontWeight: "bold",
+    textAlign: "center",
+  },
+  cancelButton: {
+    backgroundColor: "#dc3545",
+    padding: 15,
+    borderRadius: 5,
+  },
+  cancelButtonText: {
+    color: "#fff",
+    fontWeight: "bold",
+    textAlign: "center",
   },
 });
 
-export default App;
+export default PasswordsScreen;
