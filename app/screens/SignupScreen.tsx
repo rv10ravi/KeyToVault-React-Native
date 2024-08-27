@@ -42,7 +42,7 @@ const SignupScreen: React.FC<{ navigation: any }> = ({ navigation }) => {
       await auth.signOut();
       navigation.navigate("Login");
     } catch (error: any) {
-      Alert.alert("Signup Error", error.message);
+      Alert.alert("Invalid Email!");
     }
   };
 

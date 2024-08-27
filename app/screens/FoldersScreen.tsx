@@ -15,7 +15,6 @@ import {
 import * as DocumentPicker from "expo-document-picker";
 import * as FileSystem from "expo-file-system";
 import * as SecureStore from "expo-secure-store";
-import * as WebBrowser from "expo-web-browser";
 import CryptoJS from "crypto-js";
 import ImageViewer from "react-native-image-viewing";
 import * as IntentLauncher from "expo-intent-launcher";
@@ -249,16 +248,16 @@ const App = () => {
         keyExtractor={(item) => item.path}
         renderItem={({ item }) => (
           <View style={styles.card}>
-            <Text>{item.name}</Text>
+            <Text style={styles.cardText}>{item.name}</Text>
             <View style={styles.cardButtons}>
-              <Button title="Decrypt" onPress={() => openDecryptModal(item)} />
-              <Button title="Delete" onPress={() => deleteFile(item)} />
+              <Button color="#007BFF" title="Decrypt" onPress={() => openDecryptModal(item)} />
+              <Button color="#FF4136" title="Delete" onPress={() => deleteFile(item)} />
             </View>
           </View>
         )}
       />
       <View style={styles.bottomContainer}>
-        <Button title="Select File" onPress={pickFile} />
+        <Button color="#28A745" title="Select File" onPress={pickFile} />
       </View>
       <Modal
         visible={isEncryptModalVisible}
@@ -268,40 +267,13 @@ const App = () => {
       >
         <View style={styles.modalContainer}>
           <View style={styles.modalContent}>
-            <Text>Selected File: {selectedFile?.name || "None"}</Text>
+            <Text style={styles.modalTitle}>Selected File: {selectedFile?.name || "None"}</Text>
             {isLoading ? (
-              <ActivityIndicator size="large" color="#0000ff" />
+              <ActivityIndicator size="large" color="#007BFF" />
             ) : (
-              <Button title="Encrypt File" onPress={handleEncryptFile} />
+              <Button color="#007BFF" title="Encrypt File" onPress={handleEncryptFile} />
             )}
-            <Button
-              title="Cancel"
-              onPress={() => setEncryptModalVisible(false)}
-            />
-          </View>
-        </View>
-      </Modal>
-      <Modal
-        visible={isDecryptModalVisible}
-        transparent={true}
-        animationType="slide"
-        onRequestClose={() => setDecryptModalVisible(false)}
-      >
-        <View style={styles.modalContainer}>
-          <View style={styles.modalContent}>
-            <Text>Enter Decryption Key</Text>
-            <TextInput
-              style={styles.input}
-              value={decryptionKey}
-              onChangeText={setDecryptionKey}
-              placeholder="Decryption Key"
-              secureTextEntry
-            />
-            <Button title="Decrypt" onPress={handleDecrypt} />
-            <Button
-              title="Cancel"
-              onPress={() => setDecryptModalVisible(false)}
-            />
+            <Button color="#FF4136" title="Cancel" onPress={() => setEncryptModalVisible(false)} />
           </View>
         </View>
       </Modal>
@@ -313,17 +285,35 @@ const App = () => {
       >
         <View style={styles.modalContainer}>
           <View style={styles.modalContent}>
-            <Text>Encryption Key: {encryptionKey}</Text>
+            <Text style={styles.modalTitle}>Encryption Key:</Text>
+            <Text style={styles.keyText}>{encryptionKey}</Text>
             <TouchableOpacity
-              onPress={() => {
-                Clipboard.setString(encryptionKey);
-                Alert.alert("Copied to Clipboard", "Encryption key copied.");
-              }}
               style={styles.copyButton}
+              onPress={() => Clipboard.setString(encryptionKey)}
             >
               <Text style={styles.copyButtonText}>Copy Key</Text>
             </TouchableOpacity>
-            <Button title="Close" onPress={() => setKeyModalVisible(false)} />
+            <Button color="#FF4136" title="Close" onPress={() => setKeyModalVisible(false)} />
+          </View>
+        </View>
+      </Modal>
+      <Modal
+        visible={isDecryptModalVisible}
+        transparent={true}
+        animationType="slide"
+        onRequestClose={() => setDecryptModalVisible(false)}
+      >
+        <View style={styles.modalContainer}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>Enter Decryption Key:</Text>
+            <TextInput
+              style={styles.input}
+              secureTextEntry
+              value={decryptionKey}
+              onChangeText={setDecryptionKey}
+            />
+            <Button color="#007BFF" title="Decrypt File" onPress={handleDecrypt} />
+            <Button color="#FF4136" title="Cancel" onPress={() => setDecryptModalVisible(false)} />
           </View>
         </View>
       </Modal>
@@ -340,56 +330,69 @@ const App = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    padding: 20,
-    marginTop: 50,
+    padding: 16,
+    paddingTop:60,
   },
   bottomContainer: {
-    marginTop: 20,
+    marginTop: 16,
   },
   card: {
-    marginBottom: 10,
-    padding: 10,
-    borderWidth: 1,
-    borderColor: "#ddd",
-    borderRadius: 5,
+    backgroundColor: "#ffffff",
+    borderRadius: 8,
+    padding: 16,
+    marginVertical: 8,
+    elevation: 2,
+  },
+  cardText: {
+    fontSize: 16,
+    color: "#333333",
   },
   cardButtons: {
     flexDirection: "row",
     justifyContent: "space-between",
+    marginTop: 8,
   },
   modalContainer: {
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
-    backgroundColor: "rgba(0, 0, 0, 0.5)",
+    backgroundColor: "rgba(0,0,0,0.5)",
   },
   modalContent: {
-    backgroundColor: "#fff",
-    padding: 20,
-    borderRadius: 10,
+    backgroundColor: "#ffffff",
+    borderRadius: 8,
+    padding: 16,
     width: "80%",
     alignItems: "center",
   },
-  input: {
-    borderWidth: 1,
-    borderColor: "#ddd",
-    borderRadius: 5,
-    width: "100%",
-    marginBottom: 20,
-    padding: 10,
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: "bold",
+    marginBottom: 12,
   },
-  encryptionKeyContainer: {
-    marginTop: 20,
-    alignItems: "center",
+  keyText: {
+    fontSize: 16,
+    color: "#333333",
+    marginBottom: 12,
   },
   copyButton: {
-    marginTop: 10,
-    padding: 10,
     backgroundColor: "#007BFF",
-    borderRadius: 5,
+    borderRadius: 4,
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    marginBottom: 12,
   },
   copyButtonText: {
-    color: "#fff",
+    color: "#ffffff",
+    fontSize: 16,
+  },
+  input: {
+    borderWidth: 1,
+    borderColor: "#cccccc",
+    borderRadius: 4,
+    padding: 8,
+    width: "100%",
+    marginBottom: 12,
   },
 });
 

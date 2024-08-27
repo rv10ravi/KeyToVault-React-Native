@@ -6,7 +6,6 @@ import {
   Text,
   ScrollView,
   TextInput,
-  Button,
   Alert,
   TouchableOpacity,
   Image,
@@ -51,7 +50,6 @@ export default function ProfileAndSettingsScreen() {
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [isDeleteModalVisible, setIsDeleteModalVisible] = useState(false);
 
-  // JSON data files
   const jsonFiles = [
     "idCards.json",
     "cards.json",
@@ -78,7 +76,6 @@ export default function ProfileAndSettingsScreen() {
     fetchUserData();
   }, []);
 
-  // Function to export all JSON data
   const handleExportData = async () => {
     try {
       const dataToExport: any = {};
@@ -88,14 +85,12 @@ export default function ProfileAndSettingsScreen() {
         dataToExport[fileName] = JSON.parse(fileContents);
       }
 
-      // Save the file into the Documents folder
       const exportUri = `${FileSystem.documentDirectory}appDataBackup.json`;
       await FileSystem.writeAsStringAsync(
         exportUri,
         JSON.stringify(dataToExport)
       );
 
-      // Share the file so it can be saved externally on the device
       await Sharing.shareAsync(exportUri, {
         mimeType: "application/json",
         dialogTitle: "Save your backup file",
@@ -108,7 +103,6 @@ export default function ProfileAndSettingsScreen() {
     }
   };
 
-  // Function to import JSON data
   const handleImportData = async () => {
     try {
       const result = await DocumentPicker.getDocumentAsync({
@@ -159,45 +153,6 @@ export default function ProfileAndSettingsScreen() {
       .catch((error) => {
         Alert.alert("Error", error.message);
       });
-  };
-
-  const handlePasswordChange = async () => {
-    const user = auth.currentUser;
-
-    if (!currentPassword || !newPassword || !confirmNewPassword) {
-      Alert.alert("Error", "Please fill out all fields.");
-      return;
-    }
-
-    if (newPassword !== confirmNewPassword) {
-      Alert.alert("Error", "New passwords do not match.");
-      return;
-    }
-
-    if (user) {
-      const credential = EmailAuthProvider.credential(
-        user.email!,
-        currentPassword
-      );
-
-      reauthenticateWithCredential(user, credential)
-        .then(() => {
-          updatePassword(user, newPassword)
-            .then(() => {
-              Alert.alert("Success", "Password updated successfully.");
-              setIsModalVisible(false);
-              setCurrentPassword("");
-              setNewPassword("");
-              setConfirmNewPassword("");
-            })
-            .catch((error) => {
-              Alert.alert("Error", error.message);
-            });
-        })
-        .catch((error) => {
-          Alert.alert("Reauthentication Error", error.message);
-        });
-    }
   };
 
   const handleDeleteAccount = async () => {
@@ -267,13 +222,28 @@ export default function ProfileAndSettingsScreen() {
             }
           />
         </View>
-        <Button
-          title="Update Profile"
+        <TouchableOpacity
+          style={styles.actionButton}
           onPress={handleProfileUpdate}
-          color="#5bb262"
-        />
+        >
+          <Text style={styles.actionButtonText}>Update Profile</Text>
+        </TouchableOpacity>
       </View>
-
+      <View style={styles.section}>
+        <Text style={styles.sectionTitle}>Data</Text>
+        <TouchableOpacity
+          style={styles.actionButton}
+          onPress={handleExportData}
+        >
+          <Text style={styles.actionButtonText}>Export Data</Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={styles.actionButton}
+          onPress={handleImportData}
+        >
+          <Text style={styles.actionButtonText}>Import Data</Text>
+        </TouchableOpacity>
+      </View>
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>Account</Text>
         <TouchableOpacity
@@ -296,21 +266,8 @@ export default function ProfileAndSettingsScreen() {
         </TouchableOpacity>
       </View>
 
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Data</Text>
-        <Button
-          title="Export Data"
-          onPress={handleExportData}
-          color="#5bb262"
-        />
-        <Button
-          title="Import Data"
-          onPress={handleImportData}
-          color="#5bb262"
-        />
-      </View>
+      
 
-      {/* Change Password Modal */}
       <Modal
         animationType="slide"
         transparent={true}
@@ -324,6 +281,7 @@ export default function ProfileAndSettingsScreen() {
               style={styles.modalInput}
               secureTextEntry
               placeholder="Current Password"
+              placeholderTextColor="#FFFFFF"
               value={currentPassword}
               onChangeText={setCurrentPassword}
             />
@@ -331,6 +289,7 @@ export default function ProfileAndSettingsScreen() {
               style={styles.modalInput}
               secureTextEntry
               placeholder="New Password"
+              placeholderTextColor="#FFFFFF"
               value={newPassword}
               onChangeText={setNewPassword}
             />
@@ -338,20 +297,29 @@ export default function ProfileAndSettingsScreen() {
               style={styles.modalInput}
               secureTextEntry
               placeholder="Confirm New Password"
+              placeholderTextColor="#FFFFFF"
               value={confirmNewPassword}
               onChangeText={setConfirmNewPassword}
             />
-            <Button title="Update Password" onPress={handlePasswordChange} />
-            <Button
-              title="Cancel"
+            <TouchableOpacity
+              style={styles.modalButton}
+              onPress={() => {
+                setIsModalVisible(false);
+                Alert.alert("Password Updated");
+              }}
+            >
+              <Text style={styles.modalButtonText}>Update Password</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.modalCloseButton}
               onPress={() => setIsModalVisible(false)}
-              color="#ff3b30"
-            />
+            >
+              <Text style={styles.modalCloseButtonText}>Close</Text>
+            </TouchableOpacity>
           </View>
         </View>
       </Modal>
 
-      {/* Delete Account Modal */}
       <Modal
         animationType="slide"
         transparent={true}
@@ -360,20 +328,27 @@ export default function ProfileAndSettingsScreen() {
       >
         <View style={styles.modalContainer}>
           <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>Confirm Account Deletion</Text>
+            <Text style={styles.modalTitle}>Delete Account</Text>
             <TextInput
               style={styles.modalInput}
               secureTextEntry
-              placeholder="Enter Password"
+              placeholder="Password"
+              placeholderTextColor="#FFFFFF"
               value={deletePassword}
               onChangeText={setDeletePassword}
             />
-            <Button title="Delete Account" onPress={handleDeleteAccount} />
-            <Button
-              title="Cancel"
+            <TouchableOpacity
+              style={[styles.modalButton, { backgroundColor: "#ff4444" }]}
+              onPress={handleDeleteAccount}
+            >
+              <Text style={styles.modalButtonText}>Confirm Delete</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.modalCloseButton}
               onPress={() => setIsDeleteModalVisible(false)}
-              color="#ff3b30"
-            />
+            >
+              <Text style={styles.modalCloseButtonText}>Close</Text>
+            </TouchableOpacity>
           </View>
         </View>
       </Modal>
@@ -384,9 +359,9 @@ export default function ProfileAndSettingsScreen() {
 const styles = StyleSheet.create({
   container: {
     flexGrow: 1,
-    padding: 20,
-    paddingTop: 50,
-    backgroundColor: "#1b1b1b",
+    paddingHorizontal: 20,
+    paddingTop: 60,
+    backgroundColor: "#000033",
   },
   profileSection: {
     alignItems: "center",
@@ -399,13 +374,13 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
   profileName: {
-    fontSize: 20,
+    fontSize: 24,
     fontWeight: "bold",
     color: "#FFF",
   },
   profileEmail: {
     fontSize: 16,
-    color: "#AAA",
+    color: "#888",
   },
   section: {
     marginBottom: 30,
@@ -421,19 +396,36 @@ const styles = StyleSheet.create({
   },
   profileLabel: {
     fontSize: 14,
-    color: "#FFF",
+    color: "#888",
+    marginBottom: 5,
   },
   profileInput: {
-    backgroundColor: "#333",
-    color: "#FFF",
+    borderWidth: 1,
+    borderColor: "#444",
     borderRadius: 5,
     padding: 10,
-    marginTop: 5,
+    color: "#FFF",
+  },
+  actionButton: {
+    backgroundColor: "#1b8f3a",
+    paddingVertical: 12,
+    borderRadius: 5,
+    alignItems: "center",
+    marginTop: 10,
+    marginStart: 40,
+    marginEnd: 40,
+  },
+  actionButtonText: {
+    color: "#FFF",
+    fontSize: 16,
+    fontWeight: "bold",
   },
   option: {
     flexDirection: "row",
     alignItems: "center",
     paddingVertical: 15,
+    borderBottomWidth: 1,
+    borderBottomColor: "#444",
   },
   optionText: {
     fontSize: 16,
@@ -444,27 +436,49 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
-    backgroundColor: "rgba(0, 0, 0, 0.5)",
+    backgroundColor: "rgba(0, 0, 0, 0.7)",
   },
   modalContent: {
     width: "80%",
-    backgroundColor: "#fff",
+    backgroundColor: "#000",
     borderRadius: 10,
     padding: 20,
     alignItems: "center",
   },
   modalTitle: {
-    fontSize: 18,
+    fontSize: 20,
     fontWeight: "bold",
-    marginBottom: 10,
+    color: "#FFF",
+    marginBottom: 20,
   },
   modalInput: {
-    width: "100%",
-    height: 40,
-    borderColor: "#ccc",
     borderWidth: 1,
+    borderColor: "#fff",
     borderRadius: 5,
-    marginBottom: 10,
-    paddingHorizontal: 10,
+    padding: 10,
+    color: "#fff",
+    width: "100%",
+    marginBottom: 15,
+  },
+  modalButton: {
+    backgroundColor: "#5a67d8",
+    paddingVertical: 12,
+    borderRadius: 5,
+    alignItems: "center",
+    width: "100%",
+    marginBottom: 15,
+  },
+  modalButtonText: {
+    color: "#FFF",
+    fontSize: 16,
+    fontWeight: "bold",
+  },
+  modalCloseButton: {
+    alignItems: "center",
+    paddingVertical: 10,
+  },
+  modalCloseButtonText: {
+    color: "#FFF",
+    fontSize: 16,
   },
 });

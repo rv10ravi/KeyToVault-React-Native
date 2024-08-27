@@ -301,13 +301,13 @@ const styles = StyleSheet.create({
     flex: 1,
     padding: 20,
     paddingTop: 60,
-    backgroundColor: "rgba(0, 0, 0, 0.6)",
+    
   },
   scrollView: {
     paddingBottom: 100,
   },
   card: {
-    backgroundColor: "rgba(255, 255, 255, 0.8)",
+    backgroundColor: "#fff",
     padding: 15,
     marginBottom: 10,
     borderRadius: 10,

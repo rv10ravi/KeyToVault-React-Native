@@ -353,7 +353,7 @@ const styles = StyleSheet.create({
     position: "absolute",
     bottom: 20,
     right: 20,
-    backgroundColor: "#007BFF",
+    backgroundColor: "#28a745",
     borderRadius: 50,
     width: 60,
     height: 60,
@@ -420,7 +420,7 @@ const styles = StyleSheet.create({
     marginVertical: 5,
   },
   copyButton: {
-    backgroundColor: "#007BFF",
+    backgroundColor: "#28a745",
     padding: 10,
     borderRadius: 5,
   },
@@ -440,7 +440,7 @@ const styles = StyleSheet.create({
     textAlign: "center",
   },
   cancelButton: {
-    backgroundColor: "#6c757d",
+    backgroundColor: "#dc3545",
     padding: 15,
     borderRadius: 5,
     marginBottom: 10,

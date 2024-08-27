@@ -9,6 +9,7 @@ import {
   TouchableOpacity,
   StyleSheet,
   Alert,
+  ImageBackground,
 } from "react-native";
 import * as FileSystem from "expo-file-system";
 import * as Clipboard from "expo-clipboard";
@@ -148,7 +149,10 @@ const PasswordsScreen = () => {
   };
 
   return (
-    <View style={styles.container}>
+    <ImageBackground
+    source={require("../../assets/images/img2.jpg")}
+    style={styles.container}
+    >
       <ScrollView contentContainerStyle={styles.scrollView}>
         {items.map((item) => (
           <View key={item.id} style={styles.card}>
@@ -184,14 +188,14 @@ const PasswordsScreen = () => {
                 <TextInput
                   style={styles.input}
                   placeholder="Title"
-                  placeholderTextColor="#ccc"
+                  placeholderTextColor="#666"
                   value={title}
                   onChangeText={(text) => setTitle(text)}
                 />
                 <TextInput
                   style={styles.input}
                   placeholder="Description"
-                  placeholderTextColor="#ccc"
+                  placeholderTextColor="#666"
                   value={description}
                   onChangeText={(text) => setDescription(text)}
                   multiline
@@ -243,7 +247,7 @@ const PasswordsScreen = () => {
                 <TextInput
                   style={styles.input}
                   placeholder="Enter Decryption Key"
-                  placeholderTextColor="#ccc"
+                  placeholderTextColor="#666"
                   value={decryptionKey}
                   onChangeText={(text) => setDecryptionKey(text)}
                   secureTextEntry
@@ -265,7 +269,7 @@ const PasswordsScreen = () => {
           </View>
         </Modal>
       </ScrollView>
-    </View>
+    </ImageBackground>
   );
 };
 
@@ -274,13 +278,12 @@ const styles = StyleSheet.create({
     flex: 1,
     padding: 20,
     paddingTop: 60,
-    backgroundColor: "rgba(0, 0, 0, 0.6)",
   },
   scrollView: {
     paddingBottom: 100,
   },
   card: {
-    backgroundColor: "rgba(255, 255, 255, 0.1)",
+    backgroundColor: "#fff",
     borderRadius: 10,
     padding: 20,
     marginBottom: 15,
@@ -288,25 +291,25 @@ const styles = StyleSheet.create({
   cardTitle: {
     fontSize: 20,
     fontWeight: "bold",
-    color: "#fff",
+    color: "#333",
     marginBottom: 10,
   },
   cardText: {
     fontSize: 16,
-    color: "#fff",
+    color: "#555",
+    paddingBottom:20,
   },
   cardActions: {
     flexDirection: "row",
     justifyContent: "space-between",
-    marginTop: 10,
   },
   viewButton: {
-    backgroundColor: "#009688",
+    backgroundColor: "#2196f3",
     padding: 10,
     borderRadius: 5,
   },
   deleteButton: {
-    backgroundColor: "#e53935",
+    backgroundColor: "#f44336",
     padding: 10,
     borderRadius: 5,
   },
@@ -315,13 +318,13 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
   },
   floatingButton: {
-    backgroundColor: "#009688",
     position: "absolute",
     bottom: 20,
     right: 20,
+    backgroundColor: "#28a745",
+    borderRadius: 50,
     width: 60,
     height: 60,
-    borderRadius: 30,
     justifyContent: "center",
     alignItems: "center",
   },
@@ -334,80 +337,81 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
-    backgroundColor: "rgba(0, 0, 0, 0.5)",
+    backgroundColor: "rgba(0, 0, 0, 0.7)",
   },
   modalContainer: {
-    width: "90%",
-    backgroundColor: "#333",
+    backgroundColor: "#fff", // White background
     borderRadius: 10,
     padding: 20,
+    width: "90%",
   },
   modalTitle: {
-    fontSize: 24,
+    fontSize: 22,
     fontWeight: "bold",
-    color: "#fff",
+    color: "#333",
     marginBottom: 20,
   },
   input: {
-    backgroundColor: "#444",
-    color: "#fff",
+    backgroundColor: "#f2f2f2",
+    color: "#000",
+    padding: 15,
     borderRadius: 5,
-    padding: 10,
     marginBottom: 15,
   },
   modalButton: {
-    backgroundColor: "#009688",
-    padding: 10,
+    backgroundColor: "#2196f3",
+    padding: 15,
     borderRadius: 5,
     alignItems: "center",
-    marginBottom: 10,
+    marginBottom: 15,
   },
   modalButtonText: {
     color: "#fff",
     fontWeight: "bold",
   },
-  saveButton: {
-    backgroundColor: "#009688",
+  keyContainer: {
+    marginBottom: 15,
+  },
+  keyText: {
+    color: "#333",
+    fontSize: 16,
+    marginBottom: 5,
+  },
+  keyValue: {
+    color: "#000",
+    backgroundColor: "#f2f2f2",
+    padding: 10,
+    borderRadius: 5,
+    marginBottom: 10,
+  },
+  copyButton: {
+    backgroundColor: "#4caf50",
     padding: 10,
     borderRadius: 5,
     alignItems: "center",
-    marginBottom: 10,
+  },
+  copyButtonText: {
+    color: "#fff",
+    fontWeight: "bold",
+  },
+  saveButton: {
+    backgroundColor: "#4caf50",
+    padding: 15,
+    borderRadius: 5,
+    alignItems: "center",
+    marginBottom: 15,
   },
   saveButtonText: {
     color: "#fff",
     fontWeight: "bold",
   },
   cancelButton: {
-    backgroundColor: "#e53935",
-    padding: 10,
+    backgroundColor: "#f44336",
+    padding: 15,
     borderRadius: 5,
     alignItems: "center",
   },
   cancelButtonText: {
-    color: "#fff",
-    fontWeight: "bold",
-  },
-  keyContainer: {
-    marginVertical: 15,
-  },
-  keyText: {
-    fontSize: 16,
-    color: "#fff",
-    marginBottom: 5,
-  },
-  keyValue: {
-    fontSize: 16,
-    color: "#e0e0e0",
-    marginBottom: 10,
-  },
-  copyButton: {
-    backgroundColor: "#009688",
-    padding: 10,
-    borderRadius: 5,
-    alignItems: "center",
-    marginBottom: 15,
-  },
-  copyButtonText: {
     color: "#fff",
     fontWeight: "bold",
   },

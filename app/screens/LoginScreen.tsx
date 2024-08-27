@@ -17,7 +17,11 @@ const LoginScreen: React.FC<{ navigation: any }> = ({ navigation }) => {
 
   const handleLogin = async () => {
     try {
-      const userCredential = await signInWithEmailAndPassword(auth, email, password);
+      const userCredential = await signInWithEmailAndPassword(
+        auth,
+        email,
+        password
+      );
       const user = userCredential.user;
 
       if (user.emailVerified) {
@@ -25,10 +29,13 @@ const LoginScreen: React.FC<{ navigation: any }> = ({ navigation }) => {
         navigation.navigate("Tabs");
       } else {
         await auth.signOut();
-        Alert.alert("Email not verified", "Please verify your email before logging in.");
+        Alert.alert(
+          "Email not verified",
+          "Please verify your email before logging in."
+        );
       }
     } catch (error: any) {
-      Alert.alert("Login Error", error.message);
+      Alert.alert("Incorrect Email or Password");
     }
   };
 
