@@ -18,6 +18,7 @@ import * as SecureStore from "expo-secure-store";
 import * as WebBrowser from "expo-web-browser";
 import CryptoJS from "crypto-js";
 import ImageViewer from "react-native-image-viewing";
+import * as IntentLauncher from "expo-intent-launcher";
 
 const App = () => {
   const [files, setFiles] = useState([]);
@@ -161,6 +162,24 @@ const App = () => {
     }
   };
 
+  const openFileWithViewer = async (fileUri) => {
+    try {
+      if (fileUri.endsWith(".pdf")) {
+        const contentUri = await FileSystem.getContentUriAsync(fileUri);
+        IntentLauncher.startActivityAsync("android.intent.action.VIEW", {
+          data: contentUri,
+          flags: 1,
+          type: "application/pdf",
+        });
+      } else {
+        await FileViewer.open(fileUri);
+      }
+    } catch (error) {
+      console.error("Error opening file:", error);
+      Alert.alert("Error", "Failed to open file.");
+    }
+  };
+
   const decryptAndViewFile = async (file) => {
     try {
       const { key } = await retrieveEncryptionDetails(file.name);
@@ -186,7 +205,7 @@ const App = () => {
 
       if (file.name.endsWith(".pdf")) {
         console.log("PDF file ready for viewing");
-        await WebBrowser.openBrowserAsync(copiedFilePath);
+        await openFileWithViewer(copiedFilePath);
       } else if (
         file.name.endsWith(".jpg") ||
         file.name.endsWith(".jpeg") ||

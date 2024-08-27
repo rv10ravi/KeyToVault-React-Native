@@ -12,6 +12,8 @@ import {
   Image,
   Modal,
 } from "react-native";
+import * as FileSystem from "expo-file-system";
+import * as DocumentPicker from "expo-document-picker";
 import { auth, db } from "../../firebaseConfig";
 import { getDoc, setDoc, doc, deleteDoc } from "firebase/firestore";
 import {
@@ -22,6 +24,7 @@ import {
 } from "firebase/auth";
 import { useNavigation } from "@react-navigation/native";
 import { StackNavigationProp } from "@react-navigation/stack";
+import * as Sharing from "expo-sharing";
 
 type RootStackParamList = {
   Login: undefined;
@@ -46,6 +49,15 @@ export default function ProfileAndSettingsScreen() {
   const [deletePassword, setDeletePassword] = useState("");
   const [loading, setLoading] = useState(true);
   const [isModalVisible, setIsModalVisible] = useState(false);
+  const [isDeleteModalVisible, setIsDeleteModalVisible] = useState(false);
+
+  // JSON data files
+  const jsonFiles = [
+    "idCards.json",
+    "cards.json",
+    "passwords.json",
+    "secureNotes.json",
+  ];
 
   useEffect(() => {
     const fetchUserData = async () => {
@@ -65,6 +77,66 @@ export default function ProfileAndSettingsScreen() {
 
     fetchUserData();
   }, []);
+
+  // Function to export all JSON data
+  const handleExportData = async () => {
+    try {
+      const dataToExport: any = {};
+      for (let fileName of jsonFiles) {
+        const fileUri = `${FileSystem.documentDirectory}${fileName}`;
+        const fileContents = await FileSystem.readAsStringAsync(fileUri);
+        dataToExport[fileName] = JSON.parse(fileContents);
+      }
+
+      // Save the file into the Documents folder
+      const exportUri = `${FileSystem.documentDirectory}appDataBackup.json`;
+      await FileSystem.writeAsStringAsync(
+        exportUri,
+        JSON.stringify(dataToExport)
+      );
+
+      // Share the file so it can be saved externally on the device
+      await Sharing.shareAsync(exportUri, {
+        mimeType: "application/json",
+        dialogTitle: "Save your backup file",
+        UTI: "public.json",
+      });
+
+      Alert.alert("Success", "Data exported successfully!");
+    } catch (error) {
+      Alert.alert("Error", "Failed to export data.");
+    }
+  };
+
+  // Function to import JSON data
+  const handleImportData = async () => {
+    try {
+      const result = await DocumentPicker.getDocumentAsync({
+        type: "application/json",
+        copyToCacheDirectory: true,
+      });
+
+      if (result.type === "success") {
+        const importUri = result.uri;
+        const importedData = await FileSystem.readAsStringAsync(importUri);
+        const parsedData = JSON.parse(importedData);
+
+        for (let fileName of jsonFiles) {
+          if (parsedData[fileName]) {
+            const fileUri = `${FileSystem.documentDirectory}${fileName}`;
+            await FileSystem.writeAsStringAsync(
+              fileUri,
+              JSON.stringify(parsedData[fileName])
+            );
+          }
+        }
+
+        Alert.alert("Success", "Data imported successfully!");
+      }
+    } catch (error) {
+      Alert.alert("Error", "Failed to import data.");
+    }
+  };
 
   const handleProfileUpdate = async () => {
     const user = auth.currentUser;
@@ -215,12 +287,27 @@ export default function ProfileAndSettingsScreen() {
           <Ionicons name="log-out-outline" size={24} color="#FFF" />
           <Text style={styles.optionText}>Sign Out</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={styles.option} onPress={handleDeleteAccount}>
-          <Ionicons name="trash-outline" size={24} color="#FF6060" />
-          <Text style={[styles.optionText, { color: "#FF6060" }]}>
-            Delete Account
-          </Text>
+        <TouchableOpacity
+          style={styles.option}
+          onPress={() => setIsDeleteModalVisible(true)}
+        >
+          <Ionicons name="trash-outline" size={24} color="#FFF" />
+          <Text style={styles.optionText}>Delete Account</Text>
         </TouchableOpacity>
+      </View>
+
+      <View style={styles.section}>
+        <Text style={styles.sectionTitle}>Data</Text>
+        <Button
+          title="Export Data"
+          onPress={handleExportData}
+          color="#5bb262"
+        />
+        <Button
+          title="Import Data"
+          onPress={handleImportData}
+          color="#5bb262"
+        />
       </View>
 
       {/* Change Password Modal */}
@@ -228,46 +315,65 @@ export default function ProfileAndSettingsScreen() {
         animationType="slide"
         transparent={true}
         visible={isModalVisible}
-        onRequestClose={() => {
-          setIsModalVisible(!isModalVisible);
-        }}
+        onRequestClose={() => setIsModalVisible(false)}
       >
         <View style={styles.modalContainer}>
           <View style={styles.modalContent}>
             <Text style={styles.modalTitle}>Change Password</Text>
             <TextInput
               style={styles.modalInput}
-              placeholder="Current Password"
               secureTextEntry
+              placeholder="Current Password"
               value={currentPassword}
               onChangeText={setCurrentPassword}
             />
             <TextInput
               style={styles.modalInput}
-              placeholder="New Password"
               secureTextEntry
+              placeholder="New Password"
               value={newPassword}
               onChangeText={setNewPassword}
             />
             <TextInput
               style={styles.modalInput}
-              placeholder="Confirm New Password"
               secureTextEntry
+              placeholder="Confirm New Password"
               value={confirmNewPassword}
               onChangeText={setConfirmNewPassword}
             />
-            <View style={styles.modalButtons}>
-              <Button
-                title="Cancel"
-                onPress={() => setIsModalVisible(false)}
-                color="#808080"
-              />
-              <Button
-                title="Change Password"
-                onPress={handlePasswordChange}
-                color="#5bb262"
-              />
-            </View>
+            <Button title="Update Password" onPress={handlePasswordChange} />
+            <Button
+              title="Cancel"
+              onPress={() => setIsModalVisible(false)}
+              color="#ff3b30"
+            />
+          </View>
+        </View>
+      </Modal>
+
+      {/* Delete Account Modal */}
+      <Modal
+        animationType="slide"
+        transparent={true}
+        visible={isDeleteModalVisible}
+        onRequestClose={() => setIsDeleteModalVisible(false)}
+      >
+        <View style={styles.modalContainer}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>Confirm Account Deletion</Text>
+            <TextInput
+              style={styles.modalInput}
+              secureTextEntry
+              placeholder="Enter Password"
+              value={deletePassword}
+              onChangeText={setDeletePassword}
+            />
+            <Button title="Delete Account" onPress={handleDeleteAccount} />
+            <Button
+              title="Cancel"
+              onPress={() => setIsDeleteModalVisible(false)}
+              color="#ff3b30"
+            />
           </View>
         </View>
       </Modal>
@@ -278,13 +384,13 @@ export default function ProfileAndSettingsScreen() {
 const styles = StyleSheet.create({
   container: {
     flexGrow: 1,
-    backgroundColor: "#121212",
     padding: 20,
-    paddingTop: 60,
+    paddingTop: 50,
+    backgroundColor: "#1b1b1b",
   },
   profileSection: {
     alignItems: "center",
-    marginBottom: 30,
+    marginBottom: 20,
   },
   profileImage: {
     width: 100,
@@ -293,47 +399,46 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
   profileName: {
-    fontSize: 24,
-    color: "#FFF",
+    fontSize: 20,
     fontWeight: "bold",
+    color: "#FFF",
   },
   profileEmail: {
     fontSize: 16,
-    color: "#808080",
+    color: "#AAA",
   },
   section: {
     marginBottom: 30,
   },
   sectionTitle: {
-    fontSize: 20,
+    fontSize: 18,
+    fontWeight: "bold",
     color: "#FFF",
     marginBottom: 10,
+  },
+  profileItem: {
+    marginBottom: 15,
+  },
+  profileLabel: {
+    fontSize: 14,
+    color: "#FFF",
+  },
+  profileInput: {
+    backgroundColor: "#333",
+    color: "#FFF",
+    borderRadius: 5,
+    padding: 10,
+    marginTop: 5,
   },
   option: {
     flexDirection: "row",
     alignItems: "center",
     paddingVertical: 15,
-    borderBottomColor: "#808080",
-    borderBottomWidth: 1,
   },
   optionText: {
-    fontSize: 18,
-    color: "#FFF",
-    marginLeft: 15,
-  },
-  profileItem: {
-    marginBottom: 20,
-  },
-  profileLabel: {
     fontSize: 16,
-    color: "#808080",
-    marginBottom: 5,
-  },
-  profileInput: {
-    backgroundColor: "#1E1E1E",
     color: "#FFF",
-    padding: 10,
-    borderRadius: 5,
+    marginLeft: 10,
   },
   modalContainer: {
     flex: 1,
@@ -343,25 +448,23 @@ const styles = StyleSheet.create({
   },
   modalContent: {
     width: "80%",
-    backgroundColor: "#1E1E1E",
+    backgroundColor: "#fff",
     borderRadius: 10,
     padding: 20,
+    alignItems: "center",
   },
   modalTitle: {
-    fontSize: 20,
-    color: "#FFF",
+    fontSize: 18,
     fontWeight: "bold",
-    marginBottom: 20,
+    marginBottom: 10,
   },
   modalInput: {
-    backgroundColor: "#FFF",
-    color: "#000",
-    padding: 10,
+    width: "100%",
+    height: 40,
+    borderColor: "#ccc",
+    borderWidth: 1,
     borderRadius: 5,
-    marginBottom: 20,
-  },
-  modalButtons: {
-    flexDirection: "row",
-    justifyContent: "space-between",
+    marginBottom: 10,
+    paddingHorizontal: 10,
   },
 });
