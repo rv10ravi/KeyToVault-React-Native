@@ -103,6 +103,38 @@ export default function ProfileAndSettingsScreen() {
     }
   };
 
+  const DATA_FILES = [
+    "idCards.json",
+    "cards.json",
+    "passwords.json",
+    "secureNotes.json",
+  ];
+  const FILE_PATH_PREFIX = `${FileSystem.documentDirectory}`;
+
+  const readExistingData = async (fileName) => {
+    const fileUri = `${FILE_PATH_PREFIX}${fileName}`;
+    try {
+      const fileExists = await FileSystem.getInfoAsync(fileUri);
+      if (!fileExists.exists) {
+        return [];
+      }
+      const fileContent = await FileSystem.readAsStringAsync(fileUri);
+      return JSON.parse(fileContent);
+    } catch (error) {
+      console.error(`Error reading ${fileName}:`, error);
+      return [];
+    }
+  };
+
+  const writeDataToFile = async (fileName, data) => {
+    const fileUri = `${FILE_PATH_PREFIX}${fileName}`;
+    try {
+      await FileSystem.writeAsStringAsync(fileUri, JSON.stringify(data));
+    } catch (error) {
+      console.error(`Error writing to ${fileName}:`, error);
+    }
+  };
+
   const handleImportData = async () => {
     try {
       const result = await DocumentPicker.getDocumentAsync({
@@ -110,25 +142,40 @@ export default function ProfileAndSettingsScreen() {
         copyToCacheDirectory: true,
       });
 
-      if (result.type === "success") {
-        const importUri = result.uri;
-        const importedData = await FileSystem.readAsStringAsync(importUri);
-        const parsedData = JSON.parse(importedData);
-
-        for (let fileName of jsonFiles) {
-          if (parsedData[fileName]) {
-            const fileUri = `${FileSystem.documentDirectory}${fileName}`;
-            await FileSystem.writeAsStringAsync(
-              fileUri,
-              JSON.stringify(parsedData[fileName])
-            );
-          }
-        }
-
-        Alert.alert("Success", "Data imported successfully!");
+      if (result.canceled || !result.assets || !result.assets.length) {
+        alert("No file selected or operation canceled");
+        return;
       }
+
+      const fileUri = result.assets[0].uri;
+      const fileContent = await FileSystem.readAsStringAsync(fileUri);
+      const parsedData = JSON.parse(fileContent);
+
+      if (!parsedData) {
+        alert("Failed to parse the JSON file");
+        return;
+      }
+
+      // Loop through each of the expected JSON files
+      for (let fileName of DATA_FILES) {
+        if (parsedData[fileName]) {
+          console.log(`${fileName} Data:`, parsedData[fileName]);
+
+          // Read the existing data from the file system
+          let existingData = await readExistingData(fileName);
+
+          // Merge existing data with imported data
+          existingData = [...existingData, ...parsedData[fileName]];
+
+          // Write the merged data back to the file
+          await writeDataToFile(fileName, existingData);
+        }
+      }
+
+      alert("Data imported and merged successfully!");
     } catch (error) {
-      Alert.alert("Error", "Failed to import data.");
+      console.error("Error during import:", error);
+      alert("An error occurred while importing the data");
     }
   };
 
@@ -265,8 +312,6 @@ export default function ProfileAndSettingsScreen() {
           <Text style={styles.optionText}>Delete Account</Text>
         </TouchableOpacity>
       </View>
-
-      
 
       <Modal
         animationType="slide"
