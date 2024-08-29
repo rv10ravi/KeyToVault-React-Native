@@ -235,6 +235,44 @@ export default function ProfileAndSettingsScreen() {
         });
     }
   };
+  const handlePasswordChange = async () => {
+    const user = auth.currentUser;
+
+    if (!currentPassword || !newPassword || !confirmNewPassword) {
+      Alert.alert("Error", "Please fill out all fields.");
+      return;
+    }
+
+    if (newPassword !== confirmNewPassword) {
+      Alert.alert("Error", "New passwords do not match.");
+      return;
+    }
+
+    if (user) {
+      const credential = EmailAuthProvider.credential(
+        user.email!,
+        currentPassword
+      );
+
+      reauthenticateWithCredential(user, credential)
+        .then(() => {
+          updatePassword(user, newPassword)
+            .then(() => {
+              Alert.alert("Success", "Password updated successfully.");
+              setIsModalVisible(false);
+              setCurrentPassword("");
+              setNewPassword("");
+              setConfirmNewPassword("");
+            })
+            .catch((error) => {
+              Alert.alert("Error");
+            });
+        })
+        .catch((error) => {
+          Alert.alert("Incorrect Password !", error.message);
+        });
+    }
+  };
 
   return (
     <ScrollView contentContainerStyle={styles.container}>
@@ -348,10 +386,7 @@ export default function ProfileAndSettingsScreen() {
             />
             <TouchableOpacity
               style={styles.modalButton}
-              onPress={() => {
-                setIsModalVisible(false);
-                Alert.alert("Password Updated");
-              }}
+              onPress={handlePasswordChange}
             >
               <Text style={styles.modalButtonText}>Update Password</Text>
             </TouchableOpacity>
