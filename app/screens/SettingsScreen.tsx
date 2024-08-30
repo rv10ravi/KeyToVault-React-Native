@@ -235,6 +235,48 @@ export default function ProfileAndSettingsScreen() {
         });
     }
   };
+  const handleExportKeys = async () => {
+    try {
+      const dataToExport: any = {};
+
+      for (let fileName of jsonFiles) {
+        const fileUri = `${FileSystem.documentDirectory}${fileName}`;
+        const fileContents = await FileSystem.readAsStringAsync(fileUri);
+        const parsedData = JSON.parse(fileContents);
+
+        // Extract only `id` and `keys` fields from each item
+        const filteredData = parsedData.map((item: any) => ({
+          id: item.id,
+          key: item.encryptionKey,
+        }));
+
+        dataToExport[fileName] = filteredData;
+      }
+
+      const exportFileName = "keysBackup.json";
+      const exportUri = `${FileSystem.documentDirectory}${exportFileName}`;
+      const jsonContent = JSON.stringify(dataToExport);
+
+      // Write the JSON content to the document directory
+      await FileSystem.writeAsStringAsync(exportUri, jsonContent);
+
+      // Provide a download option
+      if (await Sharing.isAvailableAsync()) {
+        await Sharing.shareAsync(exportUri, {
+          mimeType: "application/json",
+          dialogTitle: "Save your backup file",
+          UTI: "public.json",
+        });
+      } else {
+        Alert.alert("Download", `File saved to: ${exportUri}`);
+      }
+
+      Alert.alert("Success", "Keys exported successfully!");
+    } catch (error) {
+      Alert.alert("Error", "Failed to export keys.");
+    }
+  };
+
   const handlePasswordChange = async () => {
     const user = auth.currentUser;
 
@@ -327,6 +369,12 @@ export default function ProfileAndSettingsScreen() {
           onPress={handleImportData}
         >
           <Text style={styles.actionButtonText}>Import Data</Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={styles.actionButton}
+          onPress={handleExportKeys}
+        >
+          <Text style={styles.actionButtonText}>Export Keys</Text>
         </TouchableOpacity>
       </View>
       <View style={styles.section}>
