@@ -1,50 +1,80 @@
-# Welcome to your Expo app 👋
+# 🔐 KeyToVault – Secure Digital Asset Manager
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+KeyToVault is a cross-platform **Android/iOS application** designed to securely store and manage digital assets using **strong encryption and local processing**. The application focuses on privacy, security, and user trust by minimizing cloud dependency and safeguarding sensitive data on the user’s device.
 
-## Get started
+---
 
-1. Install dependencies
+## 📌 Features
 
-   ```bash
-   npm install
-   ```
+- 🔑 Cryptographic key pair generation during user signup  
+- 📱 Private key securely stored on the user’s device  
+- 🔐 File encryption and decryption using **AES-256**  
+- 🔒 Secure authentication with Firebase  
+- 🗂️ Local secure storage for digital assets  
+- 👤 User-friendly and intuitive interface  
 
-2. Start the app
+---
 
-   ```bash
-    npx expo start
-   ```
+## 🏗️ System Architecture
 
-In the output, you'll find options to open the app in a
+- **Frontend:** Cross-platform mobile application  
+- **Framework:** React Native  
+- **Authentication & Backend Services:** Firebase  
+- **Encryption:** AES-256 (file encryption & decryption)  
+- **Storage Strategy:** Local storage for sensitive keys and encrypted files  
 
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
+---
 
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
+## 🛠️ Technologies Used
 
-## Get a fresh project
+- React Native  
+- Firebase Authentication & Services  
+- AES-256 Encryption  
+- Android Studio  
 
-When you're ready, run:
+---
 
-```bash
-npm run reset-project
-```
+## ⚙️ Software & Hardware Requirements
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+### Software
+- Android Studio  
+- Node.js & npm  
+- React Native CLI  
+- Firebase SDK  
 
-## Learn more
+### Hardware
+- Android device or emulator  
+- iOS device or simulator (optional)
 
-To learn more about developing your project with Expo, look at the following resources:
+---
 
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
+## 🔐 Security Approach
 
-## Join the community
+- Uses **AES-256 encryption** for strong data protection  
+- Private keys are stored **locally on the device**  
+- Minimal reliance on cloud storage to reduce attack surface  
+- Local data processing to prevent network-based vulnerabilities  
 
-Join our community of developers creating universal apps.
+---
 
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+## 🎯 Anticipated Outcomes
+
+- Fully functional secure file management mobile application  
+- Enhanced data privacy and protection for users  
+- Improved trust in digital asset storage solutions  
+
+---
+
+## 📚 References
+
+- React Native – https://reactnative.dev/  
+- Firebase – https://firebase.google.com/  
+- AES-256 Encryption – https://www.progress.com/blogs/use-aes-256-encryption-secure-data  
+
+---
+
+## 👥 Project Contributors
+
+- **Hitesh Salimath**  
+- **John Anthony**  
+- **Ravi Ray**
